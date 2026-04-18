@@ -10,6 +10,7 @@
   --node-reagent-bg: #eef2ff;
   --node-side-bg: #fff7ed;
   --edge-color: #000000;
+  --input-padding: 0 4px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -129,9 +130,12 @@ body {
   border-radius: 8px;
   border: 2px solid transparent;
   min-width: 120px;
+  width: fit-content;
+  max-width: 600px;
   text-align: center;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
+  overflow: visible;
 }
 
 .chem-node:hover {
@@ -243,6 +247,8 @@ body {
   font-family: inherit;
   font-size: inherit;
   outline: none;
+  padding: var(--input-padding);
+  box-sizing: border-box;
 }
 
 .node-input {
@@ -373,7 +379,9 @@ body {
   border: none;
   outline: none;
   color: var(--text-primary);
-  width: 100px;
+  width: 100%;
+  padding: var(--input-padding);
+  box-sizing: border-box;
 }
 
 .del-mini {
@@ -435,10 +443,9 @@ body {
   background: var(--bg-color);
   border: 1px solid var(--panel-border);
   color: var(--text-primary);
-  padding: 4px 8px;
-  border-radius: 4px;
   font-size: 11px;
   flex-grow: 1;
+  width: 100%;
 }
 
 .reagent-input:focus {
