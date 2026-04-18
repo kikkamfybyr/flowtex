@@ -249,7 +249,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
         {isEditing ? (
           <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center', width: '100%' }}>
             {/* テキスト長に合わせた幅を確保するための非表示スパン */}
-            <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '0 8px', fontSize: 'inherit' }}>
+            <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '0 4px', fontSize: 'inherit' }}>
               {(data.text as string) || 'プロセス'}
             </span>
             <input 
