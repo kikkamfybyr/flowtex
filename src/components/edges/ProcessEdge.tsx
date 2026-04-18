@@ -370,12 +370,12 @@ export const ProcessEdge = ({
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
-                marginRight: '4px'
+                marginRight: '0px'
               }}>
                 <div style={{
                   position: 'absolute',
                   left: '-65px', /* 結線中心へ */
-                  width: '55px', /* 点線の長さ */
+                  width: '65px', /* 点線の長さ（ブロックの端まで到達） */
                   height: '1px',
                   borderTop: '1px dashed var(--edge-color)',
                 }} />
