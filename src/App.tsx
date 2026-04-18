@@ -15,6 +15,7 @@ import '@xyflow/react/dist/style.css';
 import { ProcessNode } from './components/nodes/ProcessNode';
 import { ProcessEdge } from './components/edges/ProcessEdge';
 import { generateTexCode } from './lib/texGenerator';
+import { supabase } from './lib/supabase';
 
 const nodeTypes = { process: ProcessNode };
 const edgeTypes = { process_edge: ProcessEdge };
@@ -127,11 +128,16 @@ export default function App() {
 
       if (flowId) {
         try {
-          const response = await fetch(`/api/flows/${flowId}`);
-          if (response.ok) {
-            const data = await response.json();
-            setNodes(data.nodes);
-            setEdges(data.edges);
+          const { data, error } = await supabase
+            .from('flows')
+            .select('data')
+            .eq('id', flowId)
+            .single();
+
+          if (!error && data) {
+            const flowData = data.data as any;
+            setNodes(flowData.nodes);
+            setEdges(flowData.edges);
             return;
           }
         } catch (err) {
@@ -267,24 +273,24 @@ export default function App() {
 
   const handleShare = async () => {
     try {
-      const response = await fetch('/api/flows', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ nodes, edges }),
-      });
+      const id = Math.random().toString(36).substring(2, 10);
+      const { error } = await supabase
+        .from('flows')
+        .insert([{
+          id,
+          data: { nodes, edges }
+        }]);
 
-      if (!response.ok) throw new Error('Failed to save to server');
+      if (error) throw error;
 
-      const { id } = await response.json();
       const shareUrl = `${window.location.origin}${window.location.pathname}?v=${id}`;
       
       navigator.clipboard.writeText(shareUrl);
       alert(`共有リンクを作成しました！クリップボードにコピーされました：\n${shareUrl}`);
-    } catch (err) {
-      console.error(err);
-      alert('共有リンクの作成に失敗しました。サーバーが起動しているか確認してください。');
+    } catch (err: any) {
+      console.error('Supabase Error:', err);
+      const msg = err.message || '不明なエラー';
+      alert(`共有リンクの作成に失敗しました。\n理由: ${msg}\n\n※テーブル「flows」があることと、RLSポリシー（INSERT許可）が設定されているか確認してください。`);
     }
   };
 
