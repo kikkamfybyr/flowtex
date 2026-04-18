@@ -1,0 +1,595 @@
+:root {
+  --bg-color: #f3f4f6;
+  --panel-bg: rgba(255, 255, 255, 0.7);
+  --panel-border: rgba(255, 255, 255, 0.4);
+  --text-primary: #1f2937;
+  --text-secondary: #4b5563;
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --node-process-bg: #ffffff;
+  --node-reagent-bg: #eef2ff;
+  --node-side-bg: #fff7ed;
+  --edge-color: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #111827;
+    --panel-bg: rgba(31, 41, 55, 0.7);
+    --panel-border: rgba(255, 255, 255, 0.2);
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --accent-color: #60a5fa;
+    --accent-hover: #3b82f6;
+    --node-process-bg: #374151; /* 明るめのグレー */
+    --node-reagent-bg: #1e40af; /* 明るめのブルー */
+    --node-side-bg: #9a3412;
+    --edge-color: #e5e7eb; /* 明るいグレーに変更 */
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* App Layout */
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 320px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-right: 1px solid var(--panel-border);
+  z-index: 10;
+}
+
+.output-sidebar {
+  border-radius: 0;
+  border-top: none;
+  border-bottom: none;
+  border-right: none;
+}
+
+.flow-container {
+  flex-grow: 1;
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+/* React Flowのノードwrapperがoverflow:hiddenにより削除ボタンをクリップするのを防ぐ */
+.react-flow__node {
+  overflow: visible !important;
+}
+
+/* Handle (connection points) ダークモード対応 */
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: var(--accent-color);
+  border: 2px solid var(--node-process-bg);
+  border-radius: 50%;
+}
+
+.react-flow__handle:hover {
+  background: white;
+  transform: scale(1.4);
+}
+
+/* React Flow Controls - ダークモード対応 */
+.react-flow__controls {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: var(--panel-bg) !important;
+  border-bottom-color: var(--panel-border) !important;
+  fill: var(--text-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--accent-color) !important;
+  fill: white !important;
+}
+
+/* Custom Nodes */
+.chem-node {
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  min-width: 120px;
+  text-align: center;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.chem-node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px -1px rgba(0,0,0,0.15);
+}
+
+.chem-node.selected {
+  border-color: var(--accent-color);
+}
+
+.node-process {
+  background-color: var(--node-process-bg);
+  border: 1px solid var(--text-secondary);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+  min-width: 160px;
+}
+
+.node-reagent {
+  background-color: var(--node-reagent-bg);
+  border-radius: 20px; /* pill shape difference */
+  border: 1px solid var(--text-secondary);
+}
+
+.delete-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  background-color: #ef4444;
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  opacity: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chem-node:hover .delete-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.delete-btn:hover {
+  background-color: #dc2626;
+  transform: scale(1.2) !important;
+}
+
+.node-tools-bottom {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.add-below-btn, .add-branch-btn {
+  background: var(--bg-color);
+  color: var(--text-primary);
+  border: 1px solid var(--text-secondary);
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 3px 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-below-btn:hover, .add-branch-btn:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.branch-selector {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+.branch-selector button {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.branch-selector button:hover {
+  background: var(--accent-hover);
+}
+
+.inline-input {
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--accent-color);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+}
+
+.node-input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-tool-btn {
+  background: var(--panel-bg);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-tool-btn:hover {
+  background: var(--accent-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+/* TeX Output */
+.tex-output {
+  flex-grow: 1;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 12px;
+  border-radius: 6px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.85rem;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  border: 1px solid var(--panel-border);
+}
+
+/* Inline Reagents styling */
+.add-side-btn {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  position: absolute;
+  right: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.add-edge-reagent-btn {
+  background: var(--accent-color);
+  color: white;
+  border: 1px solid var(--panel-border);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.1s;
+}
+.add-edge-reagent-btn:hover {
+  transform: scale(1.1);
+}
+
+.side-reagents-container {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 20px);
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.edge-reagents-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: var(--panel-bg);
+  padding: 5px;
+  border-radius: 6px;
+  border: 1px solid var(--panel-border);
+}
+
+.inline-reagent {
+  display: flex;
+  align-items: center;
+  background: var(--node-reagent-bg);
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid var(--text-secondary);
+  font-size: 12px;
+}
+
+.reagent-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  width: 100px;
+}
+
+.del-mini {
+  background: transparent;
+  color: #ef4444;
+  border: none;
+  cursor: pointer;
+  margin-left: 4px;
+  font-weight: bold;
+}
+
+/* エッジ削除ボタン（リセットしてグループ内で使う） */
+.edge-delete-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.edge-delete-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.edge-tool-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edge-reagent-item-right {
+  display: flex;
+  align-items: center;
+}
+
+.inline-reagent.glass-panel {
+  background: var(--panel-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.reagent-input {
+  background: var(--bg-color);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  flex-grow: 1;
+}
+
+.reagent-input:focus {
+  border-color: var(--accent-color);
+  background: var(--panel-bg);
+  outline: none;
+}
+
+.del-mini {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.del-mini:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.btn-secondary {
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--panel-border);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--hover-bg);
+  border-color: var(--accent-color);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+.edge-loop-toggle {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.edge-loop-toggle:hover {
+  background: rgba(59, 130, 246, 0.1);
+  transform: scale(1.1);
+}
+
+/* 回り込みモードが有効な場合のパネル枠の強調 */
+.edge-tool-group.is-loop {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3) !important;
+}
+
+.joint-node {
+  transition: all 0.2s;
+  cursor: grab;
+}
+
+.joint-node:active {
+  cursor: grabbing;
+}
+
+.joint-node:hover {
+  transform: scale(1.4);
+  background: var(--accent-color) !important;
+}
+
+.joint-node.selected {
+  background: var(--accent-color) !important;
+  box-shadow: 0 0 10px var(--accent-color);
+}
+
+/* Sidebar Resizer */
+.sidebar-resizer {
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 100;
+  transition: background 0.2s;
+  margin-left: -3px;
+  margin-right: -3px;
+}
+
+.sidebar-resizer:hover, .sidebar-resizer:active {
+  background: var(--accent-color);
+  opacity: 0.5;
+}
+
+/* Toggle Output Button (Tab Style) */
+.toggle-output-btn {
+  width: 28px;
+  height: 60px;
+  padding: 0;
+  border-radius: 8px 0 0 8px;
+  border: 1px solid var(--panel-border);
+  border-right: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  background: var(--panel-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--accent-color);
+  box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+}
+
+.toggle-output-btn:hover {
+  background: var(--accent-color);
+  color: white;
+  width: 32px;
+}
+
+.toggle-output-btn.open {
+  margin-right: -1px; /* サイドバーのボーダーと重ねて隙間を消す */
+}
+
+.toggle-output-btn.closed {
+  border-radius: 8px 0 0 8px;
+  border-right: 1px solid var(--panel-border);
+}
