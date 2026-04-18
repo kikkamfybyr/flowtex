@@ -276,7 +276,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
           {sides.map((side) => (
             <div key={side.id} className="inline-reagent">
               <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center' }}>
-                <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '2px 0', fontSize: '12px' }}>
+                <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '4px 0', fontSize: '12px', lineHeight: 1.5 }}>
                   {side.text || '横追加'}
                 </span>
                 <input 
@@ -305,7 +305,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
               {branchReagents.map((r: any) => (
                 <div key={r.id} className="inline-reagent">
                   <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center' }}>
-                    <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '2px 0', fontSize: '11px' }}>
+                    <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '4px 0', fontSize: '11px', lineHeight: 1.5 }}>
                       {r.text}
                     </span>
                     <input
