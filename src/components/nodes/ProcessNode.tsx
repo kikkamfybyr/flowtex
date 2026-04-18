@@ -254,7 +254,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
             </span>
             <input 
               autoFocus 
-              className="inline-input" 
+              className="inline-input nodrag" 
               style={{ gridArea: '1 / 1', width: '100%', minWidth: '100%' }}
               value={data.text as string} 
               onChange={handleTextChange} 
@@ -280,7 +280,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
                   {side.text || '横追加'}
                 </span>
                 <input 
-                  className="reagent-input" 
+                  className="reagent-input nodrag" 
                   style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px' }}
                   value={side.text} 
                   onChange={(e) => handleSideChange(side.id, e.target.value)}
@@ -309,7 +309,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
                       {r.text}
                     </span>
                     <input
-                      className="reagent-input"
+                      className="reagent-input nodrag"
                       style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px' }}
                       value={r.text}
                       onChange={(e) => handleBranchReagentChange(r.id, e.target.value)}

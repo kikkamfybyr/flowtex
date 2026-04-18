@@ -357,7 +357,7 @@ export const ProcessEdge = ({
           const rY = ry_base;
 
           return (
-            <div key={reagent.id} className="edge-reagent-item-right" style={{
+            <div key={reagent.id} className="edge-reagent-item-right nodrag nopan" style={{
               position: 'absolute',
               transform: `translate(0, -50%) translate(${rX}px, ${rY}px)`,
               pointerEvents: 'all',
@@ -396,7 +396,7 @@ export const ProcessEdge = ({
                     {reagent.text || '途中追加'}
                   </span>
                   <input
-                    className="reagent-input"
+                    className="reagent-input nodrag"
                     style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px', fontSize: '10px', background: 'transparent', border: 'none', padding: '4px 0', margin: 0, lineHeight: 1.5 }}
                     value={reagent.text}
                     onChange={(e) => handleReagentChange(reagent.id, e.target.value)}
