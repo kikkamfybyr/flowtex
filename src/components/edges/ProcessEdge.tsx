@@ -357,7 +357,7 @@ export const ProcessEdge = ({
           const rY = ry_base;
 
           return (
-            <div key={reagent.id} className="edge-reagent-item-right" style={{
+            <div key={reagent.id} className="edge-reagent-item-right nodrag nopan" style={{
               position: 'absolute',
               transform: `translate(0, -50%) translate(${rX}px, ${rY}px)`,
               pointerEvents: 'all',
