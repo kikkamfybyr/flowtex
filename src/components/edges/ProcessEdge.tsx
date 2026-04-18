@@ -392,12 +392,12 @@ export const ProcessEdge = ({
               
               <div className="inline-reagent glass-panel" style={{ padding: '2px 4px' }}>
                 <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center' }}>
-                  <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: 0, fontSize: '10px' }}>
+                  <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '2px 0', fontSize: '10px' }}>
                     {reagent.text || '途中追加'}
                   </span>
                   <input
                     className="reagent-input"
-                    style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px', fontSize: '10px', background: 'transparent', border: 'none', padding: 0, margin: 0 }}
+                    style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px', fontSize: '10px', background: 'transparent', border: 'none', padding: '2px 0', margin: 0 }}
                     value={reagent.text}
                     onChange={(e) => handleReagentChange(reagent.id, e.target.value)}
                     onFocus={(e) => { if (e.target.value === '途中追加') e.target.select(); }}
