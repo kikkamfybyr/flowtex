@@ -352,8 +352,8 @@ export const ProcessEdge = ({
             ry_base = sourceY + (branchMidY - sourceY) * autoPos;
           }
 
-          // ノードの真横 (中心から130px右)
-          const rX = rx_base + 130;
+          // ノードの真横 (中心から65px右)
+          const rX = rx_base + 65;
           const rY = ry_base;
 
           return (
@@ -370,18 +370,18 @@ export const ProcessEdge = ({
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
-                marginRight: '8px'
+                marginRight: '0px'
               }}>
                 <div style={{
                   position: 'absolute',
-                  left: '-130px', /* 結線中心へ */
-                  width: '120px', /* 点線の長さ */
+                  left: '-65px', /* 結線中心へ */
+                  width: '65px', /* 点線の長さ（ブロックの端まで到達） */
                   height: '1px',
                   borderTop: '1px dashed var(--edge-color)',
                 }} />
                 <div style={{
                   position: 'absolute',
-                  left: '-130px',
+                  left: '-65px',
                   width: '4px',
                   height: '4px',
                   backgroundColor: 'var(--edge-color)',
