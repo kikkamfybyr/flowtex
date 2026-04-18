@@ -370,7 +370,7 @@ export const ProcessEdge = ({
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
-                marginRight: '8px'
+                marginRight: '4px'
               }}>
                 <div style={{
                   position: 'absolute',

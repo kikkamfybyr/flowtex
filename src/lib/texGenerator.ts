@@ -33,12 +33,12 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
 \\newcommand{\\addreagent}[4]{
     \\path (#1) -- (#2) node[coordinate, pos=#3] (tmp) {};
     \\draw [thick, -{Latex[length=2.5mm, width=2.0mm]}] ($ (tmp) + (0.75, 0) $) -- (tmp);
-    \\node [reagent_node, anchor=west] at ($ (tmp) + (0.82, 0) $) {#4};
+    \\node [reagent_node, anchor=west] at ($ (tmp) + (0.785, 0) $) {#4};
 }
 
 \\newcommand{\\addside}[2]{
     \\draw [thick, -{Latex[length=2.5mm, width=2.0mm]}] ($ (#1.east) + (0.75, 0) $) |- (#1.east);
-    \\node [anchor=west, font=\\small] at ($ (#1.east) + (0.82, 0) $) {#2};
+    \\node [anchor=west, font=\\small] at ($ (#1.east) + (0.785, 0) $) {#2};
 }
 
 \\begin{document}
