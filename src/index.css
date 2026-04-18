@@ -380,9 +380,11 @@ body {
   outline: none;
   color: var(--text-primary);
   width: 100%;
-  padding: 2px 0;
+  padding: 4px 0;
   margin: 0;
-  line-height: inherit;
+  line-height: 1.5;
+  font-family: inherit;
+  letter-spacing: inherit;
   box-sizing: border-box;
 }
 
@@ -448,9 +450,11 @@ body {
   font-size: 11px;
   flex-grow: 1;
   width: 100%;
-  padding: 2px 0;
+  padding: 4px 0;
   margin: 0;
-  line-height: inherit;
+  line-height: 1.5;
+  font-family: inherit;
+  letter-spacing: inherit;
 }
 
 .reagent-input:focus {
