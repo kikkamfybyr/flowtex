@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, useEdges } from '@xyflow/react';
 import { PreviewTex } from '../PreviewTex';
 
+const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物質|挿入された工程|追加された枝|横追加|分岐 \d+)$/.test(t);
+
 export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
@@ -245,15 +247,22 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       
       <div onClick={() => setIsEditing(true)}>
         {isEditing ? (
-          <input 
-            autoFocus 
-            className="inline-input" 
-            value={data.text as string} 
-            onChange={handleTextChange} 
-            onBlur={() => setIsEditing(false)}
-            onKeyDown={(e) => { if (e.key === 'Enter') setIsEditing(false); }}
-            onFocus={(e) => e.target.select()}
-          />
+          <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center', width: '100%' }}>
+            {/* テキスト長に合わせた幅を確保するための非表示スパン */}
+            <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '0 8px', fontSize: 'inherit' }}>
+              {(data.text as string) || 'プロセス'}
+            </span>
+            <input 
+              autoFocus 
+              className="inline-input" 
+              style={{ gridArea: '1 / 1', width: '100%', minWidth: '100%' }}
+              value={data.text as string} 
+              onChange={handleTextChange} 
+              onBlur={() => setIsEditing(false)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setIsEditing(false); }}
+              onFocus={(e) => { if (isDefaultText(e.target.value)) e.target.select(); }}
+            />
+          </div>
         ) : (
           <PreviewTex text={data.text as string || 'プロセス'} />
         )}
@@ -270,7 +279,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
                 className="reagent-input" 
                 value={side.text} 
                 onChange={(e) => handleSideChange(side.id, e.target.value)}
-                onFocus={(e) => e.target.select()}
+                onFocus={(e) => { if (isDefaultText(e.target.value)) e.target.select(); }}
               />
               <button className="del-mini" onClick={() => handleSideDelete(side.id)}>×</button>
             </div>
@@ -293,7 +302,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
                     className="reagent-input"
                     value={r.text}
                     onChange={(e) => handleBranchReagentChange(r.id, e.target.value)}
-                    onFocus={(e) => e.target.select()}
+                    onFocus={(e) => { if (isDefaultText(e.target.value)) e.target.select(); }}
                   />
                   <button className="del-mini" onClick={() => handleBranchReagentDelete(r.id)}>×</button>
                 </div>
