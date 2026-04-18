@@ -391,13 +391,18 @@ export const ProcessEdge = ({
               </div>
               
               <div className="inline-reagent glass-panel" style={{ padding: '2px 4px' }}>
-                <input
-                  className="reagent-input"
-                  style={{ width: '80px', fontSize: '10px' }}
-                  value={reagent.text}
-                  onChange={(e) => handleReagentChange(reagent.id, e.target.value)}
-                  onFocus={(e) => { if (e.target.value === '途中追加') e.target.select(); }}
-                />
+                <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center' }}>
+                  <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '0 4px', fontSize: '10px' }}>
+                    {reagent.text || '途中追加'}
+                  </span>
+                  <input
+                    className="reagent-input"
+                    style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px', fontSize: '10px', background: 'transparent', border: 'none' }}
+                    value={reagent.text}
+                    onChange={(e) => handleReagentChange(reagent.id, e.target.value)}
+                    onFocus={(e) => { if (e.target.value === '途中追加') e.target.select(); }}
+                  />
+                </div>
                 <button className="del-mini" onClick={() => handleDeleteReagent(reagent.id)} style={{ fontSize: '12px' }}>×</button>
               </div>
             </div>

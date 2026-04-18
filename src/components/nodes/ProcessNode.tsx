@@ -275,12 +275,18 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
         <div className="side-reagents-container">
           {sides.map((side) => (
             <div key={side.id} className="inline-reagent">
-              <input 
-                className="reagent-input" 
-                value={side.text} 
-                onChange={(e) => handleSideChange(side.id, e.target.value)}
-                onFocus={(e) => { if (isDefaultText(e.target.value)) e.target.select(); }}
-              />
+              <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center' }}>
+                <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '0 4px', fontSize: '12px' }}>
+                  {side.text || '横追加'}
+                </span>
+                <input 
+                  className="reagent-input" 
+                  style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px' }}
+                  value={side.text} 
+                  onChange={(e) => handleSideChange(side.id, e.target.value)}
+                  onFocus={(e) => { if (isDefaultText(e.target.value)) e.target.select(); }}
+                />
+              </div>
               <button className="del-mini" onClick={() => handleSideDelete(side.id)}>×</button>
             </div>
           ))}
@@ -298,12 +304,18 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
               <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '4px' }}>↓分岐前に追加（既存データのみ表示）</div>
               {branchReagents.map((r: any) => (
                 <div key={r.id} className="inline-reagent">
-                  <input
-                    className="reagent-input"
-                    value={r.text}
-                    onChange={(e) => handleBranchReagentChange(r.id, e.target.value)}
-                    onFocus={(e) => { if (isDefaultText(e.target.value)) e.target.select(); }}
-                  />
+                  <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center' }}>
+                    <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '0 4px', fontSize: '11px' }}>
+                      {r.text}
+                    </span>
+                    <input
+                      className="reagent-input"
+                      style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px' }}
+                      value={r.text}
+                      onChange={(e) => handleBranchReagentChange(r.id, e.target.value)}
+                      onFocus={(e) => { if (isDefaultText(e.target.value)) e.target.select(); }}
+                    />
+                  </div>
                   <button className="del-mini" onClick={() => handleBranchReagentDelete(r.id)}>×</button>
                 </div>
               ))}
