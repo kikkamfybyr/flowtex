@@ -396,7 +396,7 @@ export const ProcessEdge = ({
                   style={{ width: '80px', fontSize: '10px' }}
                   value={reagent.text}
                   onChange={(e) => handleReagentChange(reagent.id, e.target.value)}
-                  onFocus={(e) => e.target.select()}
+                  onFocus={(e) => { if (e.target.value === '途中追加') e.target.select(); }}
                 />
                 <button className="del-mini" onClick={() => handleDeleteReagent(reagent.id)} style={{ fontSize: '12px' }}>×</button>
               </div>
