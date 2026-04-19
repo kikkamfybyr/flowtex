@@ -154,9 +154,7 @@ body {
 }
 
 .output-sidebar.open {
-  background: var(--panel-bg);
   border-color: var(--panel-border);
-  box-shadow: -4px 0 16px rgba(0,0,0,0.2);
 }
 
 .output-sidebar.closed {
