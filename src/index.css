@@ -595,16 +595,13 @@ body {
   box-shadow: 0 0 10px var(--accent-color);
 }
 
-/* Sidebar Resizer (Bottom drawer horizontal resizer) */
+/* Sidebar Resizer (Hybrid PC/Mobile) */
 .sidebar-resizer {
-  height: 6px;
-  width: 100%;
-  cursor: row-resize;
   background: transparent;
   z-index: 100;
   transition: background 0.2s;
-  margin-top: -3px;
-  margin-bottom: -3px;
+  /* Hover area padding */
+  margin: -3px;
 }
 
 .sidebar-resizer:hover, .sidebar-resizer:active {
@@ -612,14 +609,9 @@ body {
   opacity: 0.5;
 }
 
-/* Toggle Output Button (Tab Style) - Bottom drawer */
+/* Toggle Output Button (Hybrid PC/Mobile) */
 .toggle-output-btn {
-  height: 28px;
-  width: 60px;
   padding: 0;
-  border-radius: 8px 8px 0 0;
-  border: 1px solid var(--panel-border);
-  border-bottom: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -629,20 +621,13 @@ body {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: var(--accent-color);
+  border: 1px solid var(--panel-border);
   box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s;
 }
 
 .toggle-output-btn:hover {
   background: var(--accent-color);
   color: white;
-  height: 32px;
-}
-
-.toggle-output-btn.open {
-  margin-bottom: -1px; /* ボトムドロワーのボーダーと重ねて隙間を消す */
-}
-
-.toggle-output-btn.closed {
-  border-radius: 8px 8px 0 0;
-  border-bottom: 1px solid var(--panel-border);
+  transform: scale(1.05); /* Hover effect replaces strict height/width expansion */
 }
