@@ -562,7 +562,6 @@ export default function App() {
       <div
         className={`sidebar glass-panel output-sidebar ${showOutput ? 'open' : 'closed'}`}
         style={{
-          position: 'absolute',
           right: isMobile ? 'auto' : 0,
           bottom: isMobile ? 0 : 'auto',
           top: isMobile ? 'auto' : 0,
@@ -578,11 +577,7 @@ export default function App() {
           padding: showOutput ? '20px' : '0px',
           overflow: 'visible',
           borderRadius: 0,
-          zIndex: 1000,
-          pointerEvents: 'none', /* パネル本体は通常クリックを透過 */
-          background: showOutput ? 'var(--panel-bg)' : 'transparent',
-          borderColor: showOutput ? 'var(--panel-border)' : 'transparent',
-          boxShadow: showOutput ? (isMobile ? '0 -4px 16px rgba(0,0,0,0.2)' : '-4px 0 16px rgba(0,0,0,0.2)') : 'none',
+          pointerEvents: showOutput ? 'auto' : 'none',
         }}
       >
         {/* Toggle Button (Tab Style) - Attached to either top edge or left edge */}

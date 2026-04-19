@@ -147,13 +147,30 @@ body {
   border-right: none;
   position: absolute;
   background: var(--panel-bg);
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px); /* 背面のディテールをよりボカす */
   box-shadow: -4px 0 16px rgba(0,0,0,0.2);
   z-index: 1000;
 }
 
+.output-sidebar.open {
+  background: var(--panel-bg);
+  border-color: var(--panel-border);
+  box-shadow: -4px 0 16px rgba(0,0,0,0.2);
+}
+
+.output-sidebar.closed {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
 @media (max-width: 900px) {
   .output-sidebar {
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.2);
+  }
+
+  .output-sidebar.open {
     box-shadow: 0 -4px 16px rgba(0,0,0,0.2);
   }
 }
