@@ -19,7 +19,6 @@ import { generateTexCode } from './lib/texGenerator';
 import { supabase } from './lib/supabase';
 import { LicensePage } from './components/LicensePage';
 import { HelpPage } from './components/HelpPage';
-import { HelpPage } from './components/HelpPage';
 
 const nodeTypes = { process: ProcessNode };
 const edgeTypes = { process_edge: ProcessEdge };
