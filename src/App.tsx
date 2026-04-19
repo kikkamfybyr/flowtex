@@ -40,7 +40,7 @@ export default function App() {
   const [showHelp, setShowHelp] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [panelHeight, setPanelHeight] = useState(250);
-  const [sideWidth, setSideWidth] = useState(600);
+  const [sideWidth, setSideWidth] = useState(450);
   const [showOutput, setShowOutput] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
 
@@ -336,10 +336,10 @@ export default function App() {
       <div className="main-content">
       {/* Sidebar */}
       <div className="sidebar glass-panel">
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>ChemFlow-TeX</h2>
+        <h2 style={{ fontSize: '1.0rem', fontWeight: 600 }}>ChemFlow-TeX</h2>
 
         <div className="sidebar-tools">
-          {!isMobile && <h4>ノード追加</h4>}
+          {!isMobile && <h4 style={{ fontSize: '0.85rem' }}>ノード追加</h4>}
           <div
             className="chem-node node-process"
             draggable
@@ -548,9 +548,9 @@ export default function App() {
             onClick={() => setShowOutput(!showOutput)}
             title={showOutput ? "閉じる" : "TeX出力を表示"}
             style={isMobile ? {
-              height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
+              height: '24px', width: '50px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
             } : {
-              width: '28px', height: '60px', borderRadius: '8px 0 0 8px', borderRight: 'none'
+              width: '24px', height: '50px', borderRadius: '8px 0 0 8px', borderRight: 'none'
             }}
           >
             {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
@@ -567,19 +567,19 @@ export default function App() {
           transition: 'opacity 0.2s ease',
           width: '100%',
         }}>
-          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap' }}>
+          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', fontSize: '0.85rem', marginBottom: '8px' }}>
             生成された TeX
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '6px' }}>
               <button
                 className="btn-primary"
-                style={{ padding: '6px 12px', fontSize: '12px' }}
+                style={{ padding: '4px 10px', fontSize: '11px' }}
                 onClick={handleDownload}
               >
-                保存 (.tex)
+                保存
               </button>
               <button
                 className="btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '12px' }}
+                style={{ padding: '4px 10px', fontSize: '11px' }}
                 onClick={handleCopy}
               >
                 コピー

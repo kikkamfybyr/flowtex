@@ -82,11 +82,11 @@ body {
 }
 
 .sidebar {
-  width: 320px;
-  padding: 20px;
+  width: 256px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
   border-right: 1px solid var(--panel-border);
   z-index: 10;
   overflow-y: auto;
@@ -334,8 +334,9 @@ body {
   color: white;
   border: none;
   border-radius: 6px;
-  padding: 10px 16px;
+  padding: 8px 14px;
   font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -548,10 +549,10 @@ body {
   background: var(--panel-bg);
   color: var(--text-primary);
   border: 1px solid var(--panel-border);
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   transition: all 0.2s ease;
 }
 
@@ -569,10 +570,10 @@ body {
   background: #ef4444;
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
   transition: all 0.2s ease;
 }
