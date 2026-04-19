@@ -558,11 +558,13 @@ export default function App() {
           borderBottom: 'none',
           transition: isResizing.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           padding: showOutput ? '20px' : '0px',
-          opacity: showOutput ? 1 : 0,
-          pointerEvents: showOutput ? 'auto' : 'none',
           overflow: 'visible',
           borderRadius: 0,
           zIndex: 1000,
+          pointerEvents: 'none', /* パネル本体は通常クリックを透過 */
+          background: showOutput ? 'var(--panel-bg)' : 'transparent',
+          borderColor: showOutput ? 'var(--panel-border)' : 'transparent',
+          boxShadow: showOutput ? (isMobile ? '0 -4px 16px rgba(0,0,0,0.2)' : '-4px 0 16px rgba(0,0,0,0.2)') : 'none',
         }}
       >
         {/* Toggle Button (Tab Style) - Attached to either top edge or left edge */}
@@ -571,7 +573,8 @@ export default function App() {
           top: isMobile ? '0' : '50%', 
           left: isMobile ? '50%' : '0', 
           transform: isMobile ? 'translate(-50%, -100%)' : 'translate(-100%, -50%)', 
-          zIndex: 1001 
+          zIndex: 1001,
+          pointerEvents: 'auto' /* ボタンは常にクリック可能 */
         }}>
           <button
             className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
