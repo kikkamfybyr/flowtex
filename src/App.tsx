@@ -494,7 +494,7 @@ export default function App() {
             snapGrid={[10, 10]}
             nodeOrigin={[0.5, 0]}
             fitView
-            fitViewOptions={{ padding: 0.2, maxZoom: 0.8 }}
+            fitViewOptions={{ padding: 0.1, maxZoom: 0.95 }}
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"

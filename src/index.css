@@ -114,21 +114,18 @@ body {
   
   .sidebar-tools {
     flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap; /* ボタン単位で折り返す */
     align-items: center;
     width: 100%;
     gap: 8px;
-    padding-bottom: 5px; /* for scrollbar */
-    scrollbar-width: none; /* Hide scrollbar for cleaner look */
+    margin-top: 5px;
   }
-  .sidebar-tools::-webkit-scrollbar { display: none; }
 
   .sidebar-tools button {
     flex-shrink: 0;
-    padding: 6px 10px;
-    font-size: 0.75rem;
-    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    white-space: nowrap; /* ボタンの中身（アイコンと文字）は改行させない */
   }
 
   .sidebar-tools .chem-node {
