@@ -19,7 +19,14 @@ export const ProcessEdge = ({
   const sourceNode = nodes.find(n => n.id === source);
   const branchOffset = (sourceNode?.data as any)?.branchOffset ?? 30;
 
-  const isBranch = !!(data?.isBranch);
+  // 線の出入り本数を動的にカウント
+  const isActualBranch = edges.filter(e => e.source === source).length > 1;
+  const isActualMerge = edges.filter(e => e.target === target).length > 1;
+  const isComplexEdge = isActualBranch || isActualMerge;
+
+  // データ上は分岐として生成されていても、1本道になったら通常の線として扱う
+  const isBranch = !!(data?.isBranch) && isActualBranch;
+
   // isLoop: 'right' | 'left' | false（後方互換でtrueは'right'扱い）
   const loopDir: 'right' | 'left' | null =
     data?.isLoop === 'left' ? 'left' :
@@ -29,11 +36,6 @@ export const ProcessEdge = ({
 
   // X座標の差
   const dx = Math.abs(sourceX - targetX);
-
-  // 線の出入り本数を動的にカウント
-  const isActualBranch = edges.filter(e => e.source === source).length > 1;
-  const isActualMerge = edges.filter(e => e.target === target).length > 1;
-  const isComplexEdge = isActualBranch || isActualMerge;
 
   // 1. 分岐パス（縦→横→縦）
   // ユーザーがドラッグで調整可能なオフセットを使用
