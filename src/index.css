@@ -60,6 +60,7 @@ body {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  position: relative; /* 子要素のオーバーレイ用 */
 }
 
 @media (max-width: 900px) {
@@ -144,6 +145,17 @@ body {
   border-top: none;
   border-bottom: none;
   border-right: none;
+  position: absolute;
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px); /* 背面のディテールをよりボカす */
+  box-shadow: -4px 0 16px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+@media (max-width: 900px) {
+  .output-sidebar {
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.2);
+  }
 }
 
 .flow-container {

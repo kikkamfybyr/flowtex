@@ -544,6 +544,11 @@ export default function App() {
       <div
         className={`sidebar glass-panel output-sidebar ${showOutput ? 'open' : 'closed'}`}
         style={{
+          position: 'absolute',
+          right: isMobile ? 'auto' : 0,
+          bottom: isMobile ? 0 : 'auto',
+          top: isMobile ? 'auto' : 0,
+          left: isMobile ? 0 : 'auto',
           height: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : '100%',
           width: isMobile ? '100%' : (showOutput ? `${sideWidth}px` : '0px'),
           flexShrink: 0,
@@ -553,11 +558,11 @@ export default function App() {
           borderBottom: 'none',
           transition: isResizing.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           padding: showOutput ? '20px' : '0px',
-          opacity: 1,
-          position: 'relative',
+          opacity: showOutput ? 1 : 0,
+          pointerEvents: showOutput ? 'auto' : 'none',
           overflow: 'visible',
           borderRadius: 0,
-          zIndex: 5,
+          zIndex: 1000,
         }}
       >
         {/* Toggle Button (Tab Style) - Attached to either top edge or left edge */}
@@ -589,7 +594,6 @@ export default function App() {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          transition: 'opacity 0.2s ease',
           width: '100%',
         }}>
           <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', marginBottom: '8px' }}>
