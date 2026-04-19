@@ -39,7 +39,7 @@ export default function App() {
   const [showLicense, setShowLicense] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  const [panelHeight, setPanelHeight] = useState(250);
+  const [panelHeight, setPanelHeight] = useState(300);
   const [sideWidth, setSideWidth] = useState(450);
   const [showOutput, setShowOutput] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
@@ -329,6 +329,9 @@ export default function App() {
     }
   };
 
+  const outputPanelId = 'tex-output-panel';
+  const outputToggleLabel = showOutput ? 'TeX出力を閉じる' : 'TeX出力を表示';
+
   return (
     <div className="app-container">
       {showLicense && <LicensePage onClose={() => setShowLicense(false)} />}
@@ -339,12 +342,12 @@ export default function App() {
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: '8px', 
-          padding: '4px 0',
-          marginBottom: '5px'
+          gap: '12px', 
+          padding: '8px 0',
+          marginBottom: '10px'
         }}>
           <div style={{
-            fontSize: '1.1rem',
+            fontSize: '1.65rem',
             fontWeight: 800,
             letterSpacing: '-0.02em',
             background: 'linear-gradient(135deg, var(--accent-color), #8b5cf6)',
@@ -355,7 +358,7 @@ export default function App() {
             ChemFlow
           </div>
           <div style={{
-            fontSize: '1.1rem',
+            fontSize: '1.65rem',
             fontWeight: 600,
             color: 'var(--text-secondary)',
             opacity: 0.9
@@ -424,19 +427,19 @@ export default function App() {
           )}
 
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="btn-secondary" onClick={handleCopy} style={{ flex: 1, padding: '8px' }}>
+            <button type="button" className="btn-secondary" onClick={handleCopy} style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>
               📋 コピー
             </button>
-            <button className="btn-secondary" onClick={handleDownload} style={{ flex: 1, padding: '8px' }}>
+            <button type="button" className="btn-secondary" onClick={handleDownload} style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>
               💾 .tex保存
             </button>
           </div>
 
-          <button className="btn-primary" onClick={handleShare}>
+          <button type="button" className="btn-primary" onClick={handleShare}>
             🔗 共有リンクを発行
           </button>
 
-          <button className="btn-danger" onClick={handleClear}>
+          <button type="button" className="btn-danger" onClick={handleClear}>
             🗑 キャンバスクリア
           </button>
 
@@ -450,7 +453,7 @@ export default function App() {
                 borderRadius: '6px',
                 padding: '4px 8px',
                 cursor: 'pointer',
-                fontSize: '0.7rem',
+                fontSize: '0.85rem',
                 flex: 1,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
@@ -466,7 +469,7 @@ export default function App() {
                 borderRadius: '6px',
                 padding: '4px 8px',
                 cursor: 'pointer',
-                fontSize: '0.7rem',
+                fontSize: '0.85rem',
                 flex: 1,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
@@ -476,8 +479,8 @@ export default function App() {
           </div>
 
           {!isMobile && (
-            <div style={{ marginTop: '15px', fontSize: '0.65rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.7rem', color: 'var(--text-primary)', marginBottom: '5px' }}>📘 使い方</div>
+            <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '6px' }}>📘 使い方</div>
               <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>ノードの編集</span><br />
                 • ノードをクリックで編集<br />
@@ -492,7 +495,7 @@ export default function App() {
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>操作</span><br />
                 • <code>🔄</code> で回り込み<br />
                 • ノードの ● からドラッグで自由接続<br />
-                • <kbd style={{ fontSize: '0.6rem' }}>Shift</kbd> + ドラッグで複数選択
+                • <kbd style={{ fontSize: '12px' }}>Shift</kbd> + ドラッグで複数選択
               </div>
             </div>
           )}
@@ -519,7 +522,7 @@ export default function App() {
             snapGrid={[10, 10]}
             nodeOrigin={[0.5, 0]}
             fitView
-            fitViewOptions={{ padding: 0.1, maxZoom: 1.1 }}
+            fitViewOptions={{ padding: 0.1, maxZoom: 1.3 }}
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
@@ -558,8 +561,40 @@ export default function App() {
         />
       )}
 
-      {/* Output pane (Hybrid PC/Mobile Drawer) */}
+      {/* Toggle Button - パネルの外に独立して配置（pointerEventsの影響を受けない） */}
+      <div style={{
+        position: 'absolute',
+        top: isMobile ? 'auto' : '50%',
+        bottom: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : 'auto',
+        right: isMobile ? 'auto' : (showOutput ? `${sideWidth}px` : '0px'),
+        left: isMobile ? '50%' : 'auto',
+        transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
+        zIndex: 1100,
+        display: 'flex',
+        pointerEvents: 'none',
+        transition: isResizing.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}>
+        <button
+          className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
+          onClick={() => setShowOutput(!showOutput)}
+          type="button"
+          aria-label={outputToggleLabel}
+          aria-expanded={showOutput}
+          aria-controls={outputPanelId}
+          title={showOutput ? "閉じる" : "TeX出力を表示"}
+          style={isMobile ? {
+            height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none', pointerEvents: 'auto'
+          } : {
+            width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none', pointerEvents: 'auto'
+          }}
+        >
+          {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
+        </button>
+      </div>
+
+      {/* Output pane (Hybrid PC/Mobile Drawer overlay) */}
       <div
+        id={outputPanelId}
         className={`sidebar glass-panel output-sidebar ${showOutput ? 'open' : 'closed'}`}
         style={{
           right: isMobile ? 'auto' : 0,
@@ -575,34 +610,13 @@ export default function App() {
           borderBottom: 'none',
           transition: isResizing.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           padding: showOutput ? '20px' : '0px',
-          overflow: 'visible',
+          overflowX: 'hidden',
+          overflowY: showOutput ? 'auto' : 'hidden', /* 閉じている時は内容をクリップ */
           borderRadius: 0,
+          zIndex: 1000,
           pointerEvents: showOutput ? 'auto' : 'none',
         }}
       >
-        {/* Toggle Button (Tab Style) - Attached to either top edge or left edge */}
-        <div style={{ 
-          position: 'absolute', 
-          top: isMobile ? '0' : '50%', 
-          left: isMobile ? '50%' : '0', 
-          transform: isMobile ? 'translate(-50%, -100%)' : 'translate(-100%, -50%)', 
-          zIndex: 1001,
-          pointerEvents: 'auto' /* ボタンは常にクリック可能 */
-        }}>
-          <button
-            className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
-            onClick={() => setShowOutput(!showOutput)}
-            title={showOutput ? "閉じる" : "TeX出力を表示"}
-            style={isMobile ? {
-              height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
-            } : {
-              width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none'
-            }}
-          >
-            {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
-          </button>
-        </div>
-
         {/* Content Wrapper (Controlled by showOutput) */}
         <div style={{
           opacity: showOutput ? 1 : 0,
@@ -612,19 +626,19 @@ export default function App() {
           flexDirection: 'column',
           width: '100%',
         }}>
-          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', marginBottom: '8px' }}>
+          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', fontSize: '1.1rem', marginBottom: '12px' }}>
             生成された TeX
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 className="btn-primary"
-                style={{ padding: '6px 12px', fontSize: '11px' }}
+                style={{ padding: '8px 18px', fontSize: '16px' }}
                 onClick={handleDownload}
               >
                 保存
               </button>
               <button
                 className="btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '11px' }}
+                style={{ padding: '8px 18px', fontSize: '16px' }}
                 onClick={handleCopy}
               >
                 コピー
