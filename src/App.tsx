@@ -355,10 +355,10 @@ export default function App() {
             ChemFlow
           </div>
           <div style={{
-            fontSize: '0.9rem',
-            fontWeight: 400,
+            fontSize: '1.1rem',
+            fontWeight: 600,
             color: 'var(--text-secondary)',
-            opacity: 0.8
+            opacity: 0.9
           }}>
             -TeX
           </div>
@@ -573,9 +573,9 @@ export default function App() {
             onClick={() => setShowOutput(!showOutput)}
             title={showOutput ? "閉じる" : "TeX出力を表示"}
             style={isMobile ? {
-              height: '24px', width: '50px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
+              height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
             } : {
-              width: '20px', height: '40px', borderRadius: '6px 0 0 6px', borderRight: 'none'
+              width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none'
             }}
           >
             {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
@@ -592,19 +592,19 @@ export default function App() {
           transition: 'opacity 0.2s ease',
           width: '100%',
         }}>
-          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', fontSize: '0.75rem', marginBottom: '8px' }}>
+          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', marginBottom: '8px' }}>
             生成された TeX
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 className="btn-primary"
-                style={{ padding: '4px 10px', fontSize: '10.5px' }}
+                style={{ padding: '6px 12px', fontSize: '11px' }}
                 onClick={handleDownload}
               >
                 保存
               </button>
               <button
                 className="btn-secondary"
-                style={{ padding: '4px 10px', fontSize: '10.5px' }}
+                style={{ padding: '6px 12px', fontSize: '11px' }}
                 onClick={handleCopy}
               >
                 コピー
