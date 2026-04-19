@@ -329,6 +329,9 @@ export default function App() {
     }
   };
 
+  const outputPanelId = 'tex-output-panel';
+  const outputToggleLabel = showOutput ? 'TeX出力を閉じる' : 'TeX出力を表示';
+
   return (
     <div className="app-container">
       {showLicense && <LicensePage onClose={() => setShowLicense(false)} />}
@@ -424,7 +427,7 @@ export default function App() {
           )}
 
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="btn-secondary" onClick={handleCopy} style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>
+            <button type="button" className="btn-secondary" onClick={handleCopy} style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>
               📋 コピー
             </button>
             <button className="btn-secondary" onClick={handleDownload} style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>
@@ -432,11 +435,11 @@ export default function App() {
             </button>
           </div>
 
-          <button className="btn-primary" onClick={handleShare}>
+          <button type="button" className="btn-primary" onClick={handleShare}>
             🔗 共有リンクを発行
           </button>
 
-          <button className="btn-danger" onClick={handleClear}>
+          <button type="button" className="btn-danger" onClick={handleClear}>
             🗑 キャンバスクリア
           </button>
 
@@ -567,17 +570,22 @@ export default function App() {
         left: isMobile ? '50%' : 'auto',
         transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
         zIndex: 1100,
-        pointerEvents: 'auto',
+        display: 'flex',
+        pointerEvents: 'none',
         transition: isResizing.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}>
         <button
           className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
           onClick={() => setShowOutput(!showOutput)}
+          type="button"
+          aria-label={outputToggleLabel}
+          aria-expanded={showOutput}
+          aria-controls={outputPanelId}
           title={showOutput ? "閉じる" : "TeX出力を表示"}
           style={isMobile ? {
-            height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
+            height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none', pointerEvents: 'auto'
           } : {
-            width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none'
+            width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none', pointerEvents: 'auto'
           }}
         >
           {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
@@ -586,6 +594,7 @@ export default function App() {
 
       {/* Output pane (Hybrid PC/Mobile Drawer overlay) */}
       <div
+        id={outputPanelId}
         className={`sidebar glass-panel output-sidebar ${showOutput ? 'open' : 'closed'}`}
         style={{
           right: isMobile ? 'auto' : 0,
@@ -601,7 +610,8 @@ export default function App() {
           borderBottom: 'none',
           transition: isResizing.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           padding: showOutput ? '20px' : '0px',
-          overflow: 'hidden', /* 閉じている時は内容をクリップ */
+          overflowX: 'hidden',
+          overflowY: showOutput ? 'auto' : 'hidden', /* 閉じている時は内容をクリップ */
           borderRadius: 0,
           zIndex: 1000,
           pointerEvents: showOutput ? 'auto' : 'none',
