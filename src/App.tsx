@@ -39,7 +39,7 @@ export default function App() {
   const [showLicense, setShowLicense] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  const [panelHeight, setPanelHeight] = useState(250);
+  const [panelHeight, setPanelHeight] = useState(300);
   const [sideWidth, setSideWidth] = useState(450);
   const [showOutput, setShowOutput] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
@@ -339,12 +339,12 @@ export default function App() {
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: '8px', 
-          padding: '4px 0',
-          marginBottom: '5px'
+          gap: '12px', 
+          padding: '8px 0',
+          marginBottom: '10px'
         }}>
           <div style={{
-            fontSize: '1.1rem',
+            fontSize: '1.65rem',
             fontWeight: 800,
             letterSpacing: '-0.02em',
             background: 'linear-gradient(135deg, var(--accent-color), #8b5cf6)',
@@ -355,7 +355,7 @@ export default function App() {
             ChemFlow
           </div>
           <div style={{
-            fontSize: '1.1rem',
+            fontSize: '1.65rem',
             fontWeight: 600,
             color: 'var(--text-secondary)',
             opacity: 0.9
@@ -519,7 +519,7 @@ export default function App() {
             snapGrid={[10, 10]}
             nodeOrigin={[0.5, 0]}
             fitView
-            fitViewOptions={{ padding: 0.1, maxZoom: 1.1 }}
+            fitViewOptions={{ padding: 0.1, maxZoom: 1.65 }}
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
@@ -612,19 +612,19 @@ export default function App() {
           flexDirection: 'column',
           width: '100%',
         }}>
-          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', marginBottom: '8px' }}>
+          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', fontSize: '1.1rem', marginBottom: '12px' }}>
             生成された TeX
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 className="btn-primary"
-                style={{ padding: '6px 12px', fontSize: '11px' }}
+                style={{ padding: '8px 18px', fontSize: '16px' }}
                 onClick={handleDownload}
               >
                 保存
               </button>
               <button
                 className="btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '11px' }}
+                style={{ padding: '8px 18px', fontSize: '16px' }}
                 onClick={handleCopy}
               >
                 コピー

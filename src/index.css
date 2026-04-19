@@ -83,16 +83,16 @@ body {
 }
 
 .sidebar {
-  width: 216px;
+  width: 256px;
   flex-shrink: 0; /* 開閉時に幅が変わらないように固定 */
-  padding: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   border-right: 1px solid var(--panel-border);
   z-index: 10;
   overflow-y: auto;
-  font-size: 0.7rem;
+  font-size: 1.05rem;
 }
 
 .sidebar-tools {
@@ -358,10 +358,10 @@ body {
   background-color: var(--accent-color);
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
+  border-radius: 8px;
+  padding: 9px 18px;
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 1.1rem;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -394,7 +394,7 @@ body {
   padding: 12px;
   border-radius: 6px;
   font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 0.6rem;
+  font-size: 0.9rem;
   overflow-y: auto;
   white-space: pre-wrap;
   border: 1px solid var(--panel-border);
@@ -574,10 +574,10 @@ body {
   background: var(--panel-bg);
   color: var(--text-primary);
   border: 1px solid var(--panel-border);
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 1.1rem;
   transition: all 0.2s ease;
 }
 
@@ -595,10 +595,10 @@ body {
   background: #ef4444;
   color: white;
   border: none;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 1.1rem;
   font-weight: 500;
   transition: all 0.2s ease;
 }
