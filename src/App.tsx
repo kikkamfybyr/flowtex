@@ -476,23 +476,23 @@ export default function App() {
           </div>
 
           {!isMobile && (
-            <div style={{ marginTop: '20px', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '8px' }}>📘 使い方</div>
-              <div style={{ marginBottom: '8px' }}>
+            <div style={{ marginTop: '15px', fontSize: '0.65rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.7rem', color: 'var(--text-primary)', marginBottom: '5px' }}>📘 使い方</div>
+              <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>ノードの編集</span><br />
                 • ノードをクリックで編集<br />
                 • <code>↓追加</code> で連結、<code>⑂分岐</code> で分岐
               </div>
-              <div style={{ marginBottom: '8px' }}>
+              <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>試薬の追加</span><br />
                 • <code>+試薬</code> で横追加<br />
                 • 線の <code>+</code> で途中追加
               </div>
-              <div style={{ marginBottom: '8px' }}>
+              <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>操作</span><br />
                 • <code>🔄</code> で回り込み<br />
                 • ノードの ● からドラッグで自由接続<br />
-                • <kbd>Shift</kbd> + ドラッグで複数選択（合流可能）
+                • <kbd style={{ fontSize: '0.6rem' }}>Shift</kbd> + ドラッグで複数選択
               </div>
             </div>
           )}
