@@ -60,6 +60,7 @@ body {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  position: relative; /* 子要素のオーバーレイ用 */
 }
 
 @media (max-width: 900px) {
@@ -82,21 +83,28 @@ body {
 }
 
 .sidebar {
-  width: 320px;
-  padding: 20px;
+  width: 216px;
+  flex-shrink: 0; /* 開閉時に幅が変わらないように固定 */
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
   border-right: 1px solid var(--panel-border);
   z-index: 10;
   overflow-y: auto;
+  font-size: 0.7rem;
+}
+
+.sidebar-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 @media (max-width: 900px) {
   .sidebar {
     width: 100%;
     height: auto;
-    max-height: 120px;
     padding: 10px 15px;
     flex-direction: row;
     border-right: none;
@@ -107,6 +115,25 @@ body {
     overflow-y: visible;
   }
   
+  .sidebar-tools {
+    flex-direction: row;
+    flex-wrap: wrap; /* ボタン単位で折り返す */
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+    margin-top: 5px;
+  }
+
+  .sidebar-tools button {
+    flex-shrink: 0;
+    white-space: nowrap; /* ボタンの中身（アイコンと文字）は改行させない */
+  }
+
+  .sidebar-tools .chem-node {
+    white-space: nowrap;
+  }
+
+
   .sidebar h2 {
     font-size: 1.1rem !important;
     margin-right: auto;
@@ -118,6 +145,28 @@ body {
   border-top: none;
   border-bottom: none;
   border-right: none;
+  position: absolute;
+  background: var(--panel-bg);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px); /* 背面のディテールをよりボカす */
+  box-shadow: -4px 0 16px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+.output-sidebar.open {
+  border-color: var(--panel-border);
+}
+
+.output-sidebar.closed {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .output-sidebar {
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.2);
+  }
 }
 
 .flow-container {
@@ -310,8 +359,9 @@ body {
   color: white;
   border: none;
   border-radius: 6px;
-  padding: 10px 16px;
+  padding: 6px 12px;
   font-weight: 600;
+  font-size: 0.75rem;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -344,7 +394,7 @@ body {
   padding: 12px;
   border-radius: 6px;
   font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 0.85rem;
+  font-size: 0.6rem;
   overflow-y: auto;
   white-space: pre-wrap;
   border: 1px solid var(--panel-border);
@@ -524,10 +574,10 @@ body {
   background: var(--panel-bg);
   color: var(--text-primary);
   border: 1px solid var(--panel-border);
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   transition: all 0.2s ease;
 }
 
@@ -545,10 +595,10 @@ body {
   background: #ef4444;
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 500;
   transition: all 0.2s ease;
 }

@@ -336,10 +336,35 @@ export default function App() {
       <div className="main-content">
       {/* Sidebar */}
       <div className="sidebar glass-panel">
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>ChemFlow-TeX</h2>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          padding: '4px 0',
+          marginBottom: '5px'
+        }}>
+          <div style={{
+            fontSize: '1.1rem',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            background: 'linear-gradient(135deg, var(--accent-color), #8b5cf6)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            display: 'inline-block'
+          }}>
+            ChemFlow
+          </div>
+          <div style={{
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            opacity: 0.9
+          }}>
+            -TeX
+          </div>
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <h4>ノード追加</h4>
+        <div className="sidebar-tools">
           <div
             className="chem-node node-process"
             draggable
@@ -392,13 +417,13 @@ export default function App() {
                 setNodes(nds => nds.concat(newNode as any));
                 setEdges(eds => eds.concat(newEdges as any));
               }} 
-              style={{ marginTop: '10px', backgroundColor: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+              style={{ backgroundColor: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
             >
               ↓ 選択項目を合流
             </button>
           )}
 
-          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn-secondary" onClick={handleCopy} style={{ flex: 1, padding: '8px' }}>
               📋 コピー
             </button>
@@ -407,15 +432,15 @@ export default function App() {
             </button>
           </div>
 
-          <button className="btn-primary" onClick={handleShare} style={{ marginTop: '10px' }}>
+          <button className="btn-primary" onClick={handleShare}>
             🔗 共有リンクを発行
           </button>
 
-          <button className="btn-danger" onClick={handleClear} style={{ marginTop: '10px' }}>
+          <button className="btn-danger" onClick={handleClear}>
             🗑 キャンバスクリア
           </button>
 
-          <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={() => setShowHelp(true)}
               style={{
@@ -423,9 +448,9 @@ export default function App() {
                 border: '1px solid var(--panel-border)',
                 color: 'var(--text-primary)',
                 borderRadius: '6px',
-                padding: '6px 10px',
+                padding: '4px 8px',
                 cursor: 'pointer',
-                fontSize: '0.8rem',
+                fontSize: '0.7rem',
                 flex: 1,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
@@ -439,35 +464,35 @@ export default function App() {
                 border: '1px solid var(--panel-border)',
                 color: 'var(--text-secondary)',
                 borderRadius: '6px',
-                padding: '6px 10px',
+                padding: '4px 8px',
                 cursor: 'pointer',
-                fontSize: '0.8rem',
+                fontSize: '0.7rem',
                 flex: 1,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
             >
-              📄 ライセンス
+              📄 License
             </button>
           </div>
 
           {!isMobile && (
-            <div style={{ marginTop: '20px', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '8px' }}>📘 使い方</div>
-              <div style={{ marginBottom: '8px' }}>
+            <div style={{ marginTop: '15px', fontSize: '0.65rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.7rem', color: 'var(--text-primary)', marginBottom: '5px' }}>📘 使い方</div>
+              <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>ノードの編集</span><br />
                 • ノードをクリックで編集<br />
                 • <code>↓追加</code> で連結、<code>⑂分岐</code> で分岐
               </div>
-              <div style={{ marginBottom: '8px' }}>
+              <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>試薬の追加</span><br />
                 • <code>+試薬</code> で横追加<br />
                 • 線の <code>+</code> で途中追加
               </div>
-              <div style={{ marginBottom: '8px' }}>
+              <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>操作</span><br />
                 • <code>🔄</code> で回り込み<br />
                 • ノードの ● からドラッグで自由接続<br />
-                • <kbd>Shift</kbd> + ドラッグで複数選択（合流可能）
+                • <kbd style={{ fontSize: '0.6rem' }}>Shift</kbd> + ドラッグで複数選択
               </div>
             </div>
           )}
@@ -494,6 +519,7 @@ export default function App() {
             snapGrid={[10, 10]}
             nodeOrigin={[0.5, 0]}
             fitView
+            fitViewOptions={{ padding: 0.1, maxZoom: 1.1 }}
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
@@ -505,12 +531,30 @@ export default function App() {
       </div>
       </div>
 
-      {/* Resize Handle (Hybrid) */}
+      {/* Resize Handle (Hybrid Overlay) */}
       {showOutput && (
         <div 
           className="sidebar-resizer" 
           onMouseDown={startResizing} 
-          style={isMobile ? { height: '6px', width: '100%', cursor: 'row-resize' } : { width: '6px', height: '100%', cursor: 'col-resize' }}
+          style={isMobile ? { 
+            position: 'absolute',
+            bottom: `${panelHeight}px`,
+            left: 0,
+            right: 0,
+            height: '8px', 
+            cursor: 'row-resize',
+            zIndex: 1100,
+            background: 'transparent'
+          } : { 
+            position: 'absolute',
+            right: `${sideWidth}px`,
+            top: 0,
+            bottom: 0,
+            width: '8px', 
+            cursor: 'col-resize',
+            zIndex: 1100,
+            background: 'transparent'
+          }}
         />
       )}
 
@@ -518,6 +562,10 @@ export default function App() {
       <div
         className={`sidebar glass-panel output-sidebar ${showOutput ? 'open' : 'closed'}`}
         style={{
+          right: isMobile ? 'auto' : 0,
+          bottom: isMobile ? 0 : 'auto',
+          top: isMobile ? 'auto' : 0,
+          left: isMobile ? 0 : 'auto',
           height: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : '100%',
           width: isMobile ? '100%' : (showOutput ? `${sideWidth}px` : '0px'),
           flexShrink: 0,
@@ -527,11 +575,9 @@ export default function App() {
           borderBottom: 'none',
           transition: isResizing.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           padding: showOutput ? '20px' : '0px',
-          opacity: 1,
-          position: 'relative',
           overflow: 'visible',
           borderRadius: 0,
-          zIndex: 5,
+          pointerEvents: showOutput ? 'auto' : 'none',
         }}
       >
         {/* Toggle Button (Tab Style) - Attached to either top edge or left edge */}
@@ -540,7 +586,8 @@ export default function App() {
           top: isMobile ? '0' : '50%', 
           left: isMobile ? '50%' : '0', 
           transform: isMobile ? 'translate(-50%, -100%)' : 'translate(-100%, -50%)', 
-          zIndex: 1001 
+          zIndex: 1001,
+          pointerEvents: 'auto' /* ボタンは常にクリック可能 */
         }}>
           <button
             className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
@@ -549,7 +596,7 @@ export default function App() {
             style={isMobile ? {
               height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
             } : {
-              width: '28px', height: '60px', borderRadius: '8px 0 0 8px', borderRight: 'none'
+              width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none'
             }}
           >
             {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
@@ -563,22 +610,21 @@ export default function App() {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          transition: 'opacity 0.2s ease',
           width: '100%',
         }}>
-          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap' }}>
+          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', marginBottom: '8px' }}>
             生成された TeX
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 className="btn-primary"
-                style={{ padding: '6px 12px', fontSize: '12px' }}
+                style={{ padding: '6px 12px', fontSize: '11px' }}
                 onClick={handleDownload}
               >
-                保存 (.tex)
+                保存
               </button>
               <button
                 className="btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '12px' }}
+                style={{ padding: '6px 12px', fontSize: '11px' }}
                 onClick={handleCopy}
               >
                 コピー
