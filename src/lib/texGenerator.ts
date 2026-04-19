@@ -16,20 +16,8 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
 \\usepackage{siunitx}
 \\usetikzlibrary{arrows.meta, positioning, calc}
 
-% --- スタイルとマクロの定義 ---
-\\tikzset{
-    proc/.style={
-        draw, thick, sharp corners, fill=white,
-        inner sep=2mm, align=center, font=\\small,
-        minimum width=2cm % 最小幅を指定しつつ可変幅を維持
-    },
-    reagent_node/.style={
-        font=\\small, inner sep=2pt, anchor=south
-    },
-    myarrow/.style={thick, {Latex[length=2.5mm, width=2.0mm]}-}
-}
-
-% 試薬ラベルを表示する位置の調整（結線中心・上10pt / 0.35cm）
+\\begin{document}
+% --- 試薬追加用マクロ (埋め込み時の衝突を防ぐため document 内に定義) ---
 \\newcommand{\\addreagent}[4]{
     \\path (#1) -- (#2) node[coordinate, pos=#3] (tmp) {};
     \\draw [thick, -{Latex[length=2.5mm, width=2.0mm]}] ($ (tmp) + (0.75, 0) $) -- (tmp);
@@ -41,15 +29,29 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
     \\node [anchor=west, font=\\small] at ($ (#1.east) + (0.785, 0) $) {#2};
 }
 
-\\begin{document}
+% --- スタイル定義 ---
+\\tikzset{
+    proc/.style={
+        draw, thick, sharp corners, fill=white,
+        inner sep=2mm, align=center, font=\\small,
+        minimum width=2cm
+    },
+    reagent_node/.style={
+        font=\\small, inner sep=2pt, anchor=south
+    },
+    myarrow/.style={thick, {Latex[length=2.5mm, width=2.0mm]}-}
+}
+
 \\begin{tikzpicture}[node distance=1.2cm]`);
 
   // ── ノード配置 ────────────────────────────────────────
   texParts.push(`\n    % === ノード配置 ===`);
   processes.forEach(node => {
     const textStr = node.data.text.replace(/\n/g, '\\\\');
-    const tx = (node.position.x / X_SCALE).toFixed(2);
-    const ty = -(node.position.y / Y_SCALE).toFixed(2); 
+    const snapX = Math.round(node.position.x / 10) * 10;
+    const snapY = Math.round(node.position.y / 10) * 10;
+    const tx = (snapX / X_SCALE).toFixed(2);
+    const ty = -(snapY / Y_SCALE).toFixed(2); 
     texParts.push(`    \\node (${node.id}) [proc] at (${tx}, ${ty}) {${textStr}};`);
   });
 
@@ -80,7 +82,8 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
       edgeData.isLoop === 'left' ? 'left' : edgeData.isLoop ? 'right' : null;
 
     if (loopDir) {
-        const srcTx = parseFloat((srcNode.position.x / X_SCALE).toFixed(2));
+        const srcSnapX = Math.round(srcNode.position.x / 10) * 10;
+        const srcTx = parseFloat((srcSnapX / X_SCALE).toFixed(2));
         const LOOP_OFFSET_CM = 2.5;
         const loopX = loopDir === 'right'
           ? (srcTx + LOOP_OFFSET_CM).toFixed(2)
@@ -90,8 +93,10 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
           `      (${edge.source}.south) -- (\\x1, \\y1-14pt) -- (${loopX}cm, \\y1-14pt) -- (${loopX}cm, \\y2+14pt) -- (\\x2, \\y2+14pt) -- (${edge.target}.north);`
         );
     } else {
-        const dx = Math.abs(srcNode.position.x - tgtNode.position.x);
-        if (dx < 5) {
+        const srcSnapX = Math.round(srcNode.position.x / 10) * 10;
+        const tgtSnapX = Math.round(tgtNode.position.x / 10) * 10;
+        const dx = Math.abs(srcSnapX - tgtSnapX);
+        if (dx === 0) {
             texParts.push(`    \\draw [thick] (${edge.source}.south) -- (${edge.target}.north);`);
         } else {
             texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-0.6) -| (${edge.target}.north);`);

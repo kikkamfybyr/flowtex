@@ -116,9 +116,24 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
 
-  const onNodeDragStop = useCallback(() => {
+  const onNodeDragStop = useCallback((_: any, node: any, nodesToUpdate: any[]) => {
     takeSnapshot();
-  }, [takeSnapshot]);
+    // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (nodesToUpdate && nodesToUpdate.some((u) => u.id === n.id)) {
+          return {
+            ...n,
+            position: {
+              x: Math.round(n.position.x / 10) * 10,
+              y: Math.round(n.position.y / 10) * 10,
+            },
+          };
+        }
+        return n;
+      })
+    );
+  }, [takeSnapshot, setNodes]);
 
   // --- Local Persistence & State Loading ---
   useEffect(() => {
@@ -337,6 +352,8 @@ export default function App() {
             - 線の中央「+」ボタンで試薬を途中追加<br />
             - 線の中央「🔄」で回り込みモード切替<br />
             - ノード側面の「+試薬」で横追加<br />
+            - <strong>Shift + ドラッグ</strong>で範囲選択<br />
+            - <strong>Shift + クリック</strong>で複数選択<br />
             <br />
             🔗 <strong>ノード同士をつなぐには:</strong><br />
             ノードにカーソルを合わせると<br />
@@ -368,7 +385,8 @@ export default function App() {
             nodeOrigin={[0.5, 0]}
             fitView
             selectionMode={SelectionMode.Partial}
-            selectNodesOnDrag={true}
+            multiSelectionKeyCode="Shift"
+            selectionKeyCode="Shift"
           >
             <Controls />
             <Background color="#aaa" gap={10} />
