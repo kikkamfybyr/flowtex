@@ -123,17 +123,13 @@ body {
 
   .sidebar-tools button {
     flex-shrink: 0;
-    padding: 6px 12px;
-    font-size: 0.8rem;
     white-space: nowrap; /* ボタンの中身（アイコンと文字）は改行させない */
   }
 
   .sidebar-tools .chem-node {
-    padding: 6px 10px;
-    min-width: auto;
-    font-size: 0.75rem;
     white-space: nowrap;
   }
+
 
   .sidebar h2 {
     font-size: 1.1rem !important;

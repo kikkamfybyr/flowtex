@@ -40,7 +40,7 @@ export default function App() {
   const [showHelp, setShowHelp] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [panelHeight, setPanelHeight] = useState(250);
-  const [sideWidth, setSideWidth] = useState(450);
+  const [sideWidth, setSideWidth] = useState(600);
   const [showOutput, setShowOutput] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
 
@@ -494,7 +494,7 @@ export default function App() {
             snapGrid={[10, 10]}
             nodeOrigin={[0.5, 0]}
             fitView
-            fitViewOptions={{ padding: 0.1, maxZoom: 1.2 }}
+            fitViewOptions={{ padding: 0.1, maxZoom: 1.1 }}
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
