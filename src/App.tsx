@@ -430,7 +430,7 @@ export default function App() {
             <button type="button" className="btn-secondary" onClick={handleCopy} style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>
               📋 コピー
             </button>
-            <button className="btn-secondary" onClick={handleDownload} style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>
+            <button type="button" className="btn-secondary" onClick={handleDownload} style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>
               💾 .tex保存
             </button>
           </div>
