@@ -116,7 +116,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
 
-  const onNodeDragStop = useCallback((_: any, node: any, nodesToUpdate: any[]) => {
+  const onNodeDragStop = useCallback((_: any, _node: any, nodesToUpdate: any[]) => {
     takeSnapshot();
     // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ
     setNodes((nds) =>
@@ -335,6 +335,45 @@ export default function App() {
               ↪ 進む
             </button>
           </div>
+
+          {nodes.filter((n: any) => n.selected).length >= 2 && (
+            <button 
+              className="btn-primary" 
+              onClick={() => {
+                const selectedNodes = nodes.filter((n: any) => n.selected);
+                if (selectedNodes.length < 2) return;
+                const maxY = Math.max(...selectedNodes.map((n: any) => n.position.y));
+                const avgX = selectedNodes.reduce((sum: number, n: any) => sum + n.position.x, 0) / selectedNodes.length;
+                const x = Math.round(avgX / 10) * 10;
+                const y = Math.round((maxY + 160) / 10) * 10;
+                
+                const newNodeId = `node_${Date.now()}`;
+                const newNode = {
+                  id: newNodeId,
+                  type: 'process',
+                  position: { x, y },
+                  data: { text: '合流', sides: [] },
+                };
+
+                const newEdges = selectedNodes.map((n: any) => ({
+                  id: `edge_${n.id}_${newNodeId}`,
+                  source: n.id,
+                  target: newNodeId,
+                  sourceHandle: 'bottom',
+                  targetHandle: 'top',
+                  type: 'process_edge',
+                  data: { reagents: [] }
+                }));
+
+                takeSnapshot();
+                setNodes(nds => nds.concat(newNode as any));
+                setEdges(eds => eds.concat(newEdges as any));
+              }} 
+              style={{ marginTop: '10px', backgroundColor: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+            >
+              ↓ 選択項目を合流
+            </button>
+          )}
 
           <button className="btn-primary" onClick={handleShare} style={{ marginTop: '10px' }}>
             🔗 共有リンクを発行

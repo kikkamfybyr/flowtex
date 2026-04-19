@@ -57,7 +57,8 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
 
   // ── フロー接続 ────────────────────────────────────────
   const branchGroups = new Map<string, string[]>();
-  const normalEdges: ChemEdge[] = [];
+  const mergeGroups = new Map<string, ChemEdge[]>();
+  const normalEdges: ChemEdge[] = []; // 保守のため既存の配列も残す
 
   edges.forEach(edge => {
     if ((edge as any).data?.isBranch) {
@@ -66,42 +67,66 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
       branchGroups.set(edge.source, targets);
     } else {
       normalEdges.push(edge);
+      const incoming = mergeGroups.get(edge.target) || [];
+      incoming.push(edge);
+      mergeGroups.set(edge.target, incoming);
     }
   });
 
   texParts.push(`\n    % === 結線 ===`);
   
-  // 1. 通常の結線
-  normalEdges.forEach(edge => {
-    const srcNode = processes.find(p => p.id === edge.source);
-    const tgtNode = processes.find(p => p.id === edge.target);
-    if (!srcNode || !tgtNode) return;
+  // 1. 通常の結線 (合流考慮)
+  mergeGroups.forEach((incomingEdges, targetId) => {
+    const tgtNode = processes.find(p => p.id === targetId);
+    if (!tgtNode) return;
 
-    const edgeData = (edge.data as any) || {};
-    const loopDir: 'right' | 'left' | null =
-      edgeData.isLoop === 'left' ? 'left' : edgeData.isLoop ? 'right' : null;
+    // ソースのX座標（スナップ済）で左から順にソートする
+    const sortedEdges = incomingEdges.sort((a, b) => {
+      const sa = processes.find(p => p.id === a.source);
+      const sb = processes.find(p => p.id === b.source);
+      const xa = sa ? Math.round(sa.position.x / 10) * 10 : 0;
+      const xb = sb ? Math.round(sb.position.x / 10) * 10 : 0;
+      return xa - xb;
+    });
 
-    if (loopDir) {
-        const srcSnapX = Math.round(srcNode.position.x / 10) * 10;
-        const srcTx = parseFloat((srcSnapX / X_SCALE).toFixed(2));
-        const LOOP_OFFSET_CM = 2.5;
-        const loopX = loopDir === 'right'
-          ? (srcTx + LOOP_OFFSET_CM).toFixed(2)
-          : (srcTx - LOOP_OFFSET_CM).toFixed(2);
-        texParts.push(
-          `    \\draw [thick] let \\p1 = (${edge.source}.south), \\p2 = (${edge.target}.north) in\n` +
-          `      (${edge.source}.south) -- (\\x1, \\y1-14pt) -- (${loopX}cm, \\y1-14pt) -- (${loopX}cm, \\y2+14pt) -- (\\x2, \\y2+14pt) -- (${edge.target}.north);`
-        );
-    } else {
-        const srcSnapX = Math.round(srcNode.position.x / 10) * 10;
-        const tgtSnapX = Math.round(tgtNode.position.x / 10) * 10;
-        const dx = Math.abs(srcSnapX - tgtSnapX);
-        if (dx === 0) {
-            texParts.push(`    \\draw [thick] (${edge.source}.south) -- (${edge.target}.north);`);
-        } else {
-            texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-0.6) -| (${edge.target}.north);`);
-        }
-    }
+    const isMerge = sortedEdges.length > 1;
+
+    sortedEdges.forEach((edge, index) => {
+      const srcNode = processes.find(p => p.id === edge.source);
+      if (!srcNode) return;
+
+      const edgeData = (edge.data as any) || {};
+      const loopDir: 'right' | 'left' | null =
+        edgeData.isLoop === 'left' ? 'left' : edgeData.isLoop ? 'right' : null;
+
+      // ターゲット位置（複数本なら等間隔、1本なら中央）
+      const fraction = ((index + 1) / (sortedEdges.length + 1)).toFixed(2);
+      const targetAnchor = isMerge
+        ? `($(${targetId}.north west)!${fraction}!(${targetId}.north east)$)`
+        : `(${targetId}.north)`;
+
+      const srcSnapX = Math.round(srcNode.position.x / 10) * 10;
+      const srcTx = parseFloat((srcSnapX / X_SCALE).toFixed(2));
+
+      if (loopDir) {
+          const LOOP_OFFSET_CM = 2.5;
+          const loopX = loopDir === 'right'
+            ? (srcTx + LOOP_OFFSET_CM).toFixed(2)
+            : (srcTx - LOOP_OFFSET_CM).toFixed(2);
+          texParts.push(
+            `    \\draw [thick] let \\p1 = (${edge.source}.south), \\p2 = ${targetAnchor} in\n` +
+            `      (${edge.source}.south) -- (\\x1, \\y1-14pt) -- (${loopX}cm, \\y1-14pt) -- (${loopX}cm, \\y2+14pt) -- (\\x2, \\y2+14pt) -- ${targetAnchor};`
+          );
+      } else {
+          const tgtSnapX = Math.round(tgtNode.position.x / 10) * 10;
+          const dx = Math.abs(srcSnapX - tgtSnapX);
+          if (dx === 0 && !isMerge) {
+              texParts.push(`    \\draw [thick] (${edge.source}.south) -- ${targetAnchor};`);
+          } else {
+              texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-0.6) -| ${targetAnchor};`);
+          }
+      }
+    });
   });
 
   // 2. 分岐線の描画
