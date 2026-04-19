@@ -84,7 +84,7 @@ body {
 
 .sidebar {
   width: 256px;
-  flex-shrink: 0; /* 開閉時に幅が変わらないように固定 */
+  flex-shrink: 0;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -92,7 +92,7 @@ body {
   border-right: 1px solid var(--panel-border);
   z-index: 10;
   overflow-y: auto;
-  font-size: 1.05rem;
+  font-size: 0.9rem;
 }
 
 .sidebar-tools {
@@ -394,7 +394,7 @@ body {
   padding: 12px;
   border-radius: 6px;
   font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   overflow-y: auto;
   white-space: pre-wrap;
   border: 1px solid var(--panel-border);

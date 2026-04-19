@@ -476,8 +476,8 @@ export default function App() {
           </div>
 
           {!isMobile && (
-            <div style={{ marginTop: '15px', fontSize: '0.65rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.7rem', color: 'var(--text-primary)', marginBottom: '5px' }}>📘 使い方</div>
+            <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '6px' }}>📘 使い方</div>
               <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>ノードの編集</span><br />
                 • ノードをクリックで編集<br />
@@ -492,7 +492,7 @@ export default function App() {
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>操作</span><br />
                 • <code>🔄</code> で回り込み<br />
                 • ノードの ● からドラッグで自由接続<br />
-                • <kbd style={{ fontSize: '0.6rem' }}>Shift</kbd> + ドラッグで複数選択
+                • <kbd style={{ fontSize: '12px' }}>Shift</kbd> + ドラッグで複数選択
               </div>
             </div>
           )}
@@ -519,7 +519,7 @@ export default function App() {
             snapGrid={[10, 10]}
             nodeOrigin={[0.5, 0]}
             fitView
-            fitViewOptions={{ padding: 0.1, maxZoom: 1.65 }}
+            fitViewOptions={{ padding: 0.1, maxZoom: 1.5 }}
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
