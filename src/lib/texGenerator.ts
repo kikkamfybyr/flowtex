@@ -2,6 +2,10 @@ import { ChemNode, ChemEdge } from './types';
 
 export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string => {
   const processes = nodes.filter(n => n.type === 'process');
+  const processById = new Map(processes.map((process) => [process.id, process]));
+  const snappedXById = new Map(
+    processes.map((process) => [process.id, Math.round(process.position.x / 10) * 10])
+  );
 
   const X_SCALE = 60; 
   const Y_SCALE = 100; 
@@ -16,20 +20,8 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
 \\usepackage{siunitx}
 \\usetikzlibrary{arrows.meta, positioning, calc}
 
-% --- スタイルとマクロの定義 ---
-\\tikzset{
-    proc/.style={
-        draw, thick, sharp corners, fill=white,
-        inner sep=2mm, align=center, font=\\small,
-        minimum width=2cm % 最小幅を指定しつつ可変幅を維持
-    },
-    reagent_node/.style={
-        font=\\small, inner sep=2pt, anchor=south
-    },
-    myarrow/.style={thick, {Latex[length=2.5mm, width=2.0mm]}-}
-}
-
-% 試薬ラベルを表示する位置の調整（結線中心・上10pt / 0.35cm）
+\\begin{document}
+% --- 試薬追加用マクロ (埋め込み時の衝突を防ぐため document 内に定義) ---
 \\newcommand{\\addreagent}[4]{
     \\path (#1) -- (#2) node[coordinate, pos=#3] (tmp) {};
     \\draw [thick, -{Latex[length=2.5mm, width=2.0mm]}] ($ (tmp) + (0.75, 0) $) -- (tmp);
@@ -41,21 +33,36 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
     \\node [anchor=west, font=\\small] at ($ (#1.east) + (0.785, 0) $) {#2};
 }
 
-\\begin{document}
+% --- スタイル定義 ---
+\\tikzset{
+    proc/.style={
+        draw, thick, sharp corners, fill=white,
+        inner sep=2mm, align=center, font=\\small,
+        minimum width=2cm
+    },
+    reagent_node/.style={
+        font=\\small, inner sep=2pt, anchor=south
+    },
+    myarrow/.style={thick, {Latex[length=2.5mm, width=2.0mm]}-}
+}
+
 \\begin{tikzpicture}[node distance=1.2cm]`);
 
   // ── ノード配置 ────────────────────────────────────────
   texParts.push(`\n    % === ノード配置 ===`);
   processes.forEach(node => {
     const textStr = node.data.text.replace(/\n/g, '\\\\');
-    const tx = (node.position.x / X_SCALE).toFixed(2);
-    const ty = -(node.position.y / Y_SCALE).toFixed(2); 
+    const snapX = Math.round(node.position.x / 10) * 10;
+    const snapY = Math.round(node.position.y / 10) * 10;
+    const tx = (snapX / X_SCALE).toFixed(2);
+    const ty = -(snapY / Y_SCALE).toFixed(2); 
     texParts.push(`    \\node (${node.id}) [proc] at (${tx}, ${ty}) {${textStr}};`);
   });
 
   // ── フロー接続 ────────────────────────────────────────
   const branchGroups = new Map<string, string[]>();
-  const normalEdges: ChemEdge[] = [];
+  const mergeGroups = new Map<string, ChemEdge[]>();
+  const normalEdges: ChemEdge[] = []; // 保守のため既存の配列も残す
 
   edges.forEach(edge => {
     if ((edge as any).data?.isBranch) {
@@ -64,46 +71,71 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
       branchGroups.set(edge.source, targets);
     } else {
       normalEdges.push(edge);
+      const incoming = mergeGroups.get(edge.target) || [];
+      incoming.push(edge);
+      mergeGroups.set(edge.target, incoming);
     }
   });
 
   texParts.push(`\n    % === 結線 ===`);
   
-  // 1. 通常の結線
-  normalEdges.forEach(edge => {
-    const srcNode = processes.find(p => p.id === edge.source);
-    const tgtNode = processes.find(p => p.id === edge.target);
-    if (!srcNode || !tgtNode) return;
+  // 1. 通常の結線 (合流考慮)
+  mergeGroups.forEach((incomingEdges, targetId) => {
+    const tgtNode = processById.get(targetId);
+    if (!tgtNode) return;
 
-    const edgeData = (edge.data as any) || {};
-    const loopDir: 'right' | 'left' | null =
-      edgeData.isLoop === 'left' ? 'left' : edgeData.isLoop ? 'right' : null;
+    // ソースのX座標（スナップ済）で左から順にソートする
+    const sortedEdges = incomingEdges.sort((a, b) => {
+      const xa = snappedXById.get(a.source) ?? 0;
+      const xb = snappedXById.get(b.source) ?? 0;
+      return xa - xb;
+    });
 
-    if (loopDir) {
-        const srcTx = parseFloat((srcNode.position.x / X_SCALE).toFixed(2));
-        const LOOP_OFFSET_CM = 2.5;
-        const loopX = loopDir === 'right'
-          ? (srcTx + LOOP_OFFSET_CM).toFixed(2)
-          : (srcTx - LOOP_OFFSET_CM).toFixed(2);
-        texParts.push(
-          `    \\draw [thick] let \\p1 = (${edge.source}.south), \\p2 = (${edge.target}.north) in\n` +
-          `      (${edge.source}.south) -- (\\x1, \\y1-14pt) -- (${loopX}cm, \\y1-14pt) -- (${loopX}cm, \\y2+14pt) -- (\\x2, \\y2+14pt) -- (${edge.target}.north);`
-        );
-    } else {
-        const dx = Math.abs(srcNode.position.x - tgtNode.position.x);
-        if (dx < 5) {
-            texParts.push(`    \\draw [thick] (${edge.source}.south) -- (${edge.target}.north);`);
-        } else {
-            texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-0.6) -| (${edge.target}.north);`);
-        }
-    }
+    const isMerge = sortedEdges.length > 1;
+
+    sortedEdges.forEach((edge, index) => {
+      const srcNode = processById.get(edge.source);
+      if (!srcNode) return;
+
+      const edgeData = (edge.data as any) || {};
+      const loopDir: 'right' | 'left' | null =
+        edgeData.isLoop === 'left' ? 'left' : edgeData.isLoop ? 'right' : null;
+
+      // ターゲット位置（複数本なら等間隔、1本なら中央）
+      const fraction = ((index + 1) / (sortedEdges.length + 1)).toFixed(2);
+      const targetAnchor = isMerge
+        ? `($(${targetId}.north west)!${fraction}!(${targetId}.north east)$)`
+        : `(${targetId}.north)`;
+
+      const srcSnapX = snappedXById.get(edge.source)!;
+      const srcTx = parseFloat((srcSnapX / X_SCALE).toFixed(2));
+
+      if (loopDir) {
+          const LOOP_OFFSET_CM = 2.5;
+          const loopX = loopDir === 'right'
+            ? (srcTx + LOOP_OFFSET_CM).toFixed(2)
+            : (srcTx - LOOP_OFFSET_CM).toFixed(2);
+          texParts.push(
+            `    \\draw [thick] let \\p1 = (${edge.source}.south), \\p2 = ${targetAnchor} in\n` +
+            `      (${edge.source}.south) -- (\\x1, \\y1-14pt) -- (${loopX}cm, \\y1-14pt) -- (${loopX}cm, \\y2+14pt) -- (\\x2, \\y2+14pt) -- ${targetAnchor};`
+          );
+      } else {
+          const tgtSnapX = snappedXById.get(targetId)!;
+          const dx = Math.abs(srcSnapX - tgtSnapX);
+          if (dx === 0 && !isMerge) {
+              texParts.push(`    \\draw [thick] (${edge.source}.south) -- ${targetAnchor};`);
+          } else {
+              texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-0.6) -| ${targetAnchor};`);
+          }
+      }
+    });
   });
 
   // 2. 分岐線の描画
   if (branchGroups.size > 0) {
     branchGroups.forEach((targets, sourceId) => {
       const splitCoord = `split_${sourceId}`;
-      const srcNode = processes.find(p => p.id === sourceId);
+      const srcNode = processById.get(sourceId);
       if (srcNode) {
         const offset = (srcNode.data as any).branchOffset ?? 60;
         const texOffset = -(offset / Y_SCALE).toFixed(2);

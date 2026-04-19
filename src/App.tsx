@@ -10,6 +10,7 @@ import {
   Connection,
   SelectionMode,
 } from '@xyflow/react';
+import type { OnNodeDrag } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { ProcessNode } from './components/nodes/ProcessNode';
@@ -116,9 +117,24 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
 
-  const onNodeDragStop = useCallback(() => {
+  const onNodeDragStop = useCallback<OnNodeDrag>((_event, _node, nodesToUpdate) => {
     takeSnapshot();
-  }, [takeSnapshot]);
+    // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (nodesToUpdate.some((u) => u.id === n.id)) {
+          return {
+            ...n,
+            position: {
+              x: Math.round(n.position.x / 10) * 10,
+              y: Math.round(n.position.y / 10) * 10,
+            },
+          };
+        }
+        return n;
+      })
+    );
+  }, [takeSnapshot, setNodes]);
 
   // --- Local Persistence & State Loading ---
   useEffect(() => {
@@ -321,6 +337,45 @@ export default function App() {
             </button>
           </div>
 
+          {nodes.filter((n: any) => n.selected).length >= 2 && (
+            <button 
+              className="btn-primary" 
+              onClick={() => {
+                const selectedNodes = nodes.filter((n: any) => n.selected);
+                if (selectedNodes.length < 2) return;
+                const maxY = Math.max(...selectedNodes.map((n: any) => n.position.y));
+                const avgX = selectedNodes.reduce((sum: number, n: any) => sum + n.position.x, 0) / selectedNodes.length;
+                const x = Math.round(avgX / 10) * 10;
+                const y = Math.round((maxY + 160) / 10) * 10;
+                
+                const newNodeId = `node_${Date.now()}`;
+                const newNode = {
+                  id: newNodeId,
+                  type: 'process',
+                  position: { x, y },
+                  data: { text: '合流', sides: [] },
+                };
+
+                const newEdges = selectedNodes.map((n: any) => ({
+                  id: `edge_${n.id}_${newNodeId}`,
+                  source: n.id,
+                  target: newNodeId,
+                  sourceHandle: 'bottom',
+                  targetHandle: 'top',
+                  type: 'process_edge',
+                  data: { reagents: [] }
+                }));
+
+                takeSnapshot();
+                setNodes(nds => nds.concat(newNode as any));
+                setEdges(eds => eds.concat(newEdges as any));
+              }} 
+              style={{ marginTop: '10px', backgroundColor: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+            >
+              ↓ 選択項目を合流
+            </button>
+          )}
+
           <button className="btn-primary" onClick={handleShare} style={{ marginTop: '10px' }}>
             🔗 共有リンクを発行
           </button>
@@ -337,6 +392,8 @@ export default function App() {
             - 線の中央「+」ボタンで試薬を途中追加<br />
             - 線の中央「🔄」で回り込みモード切替<br />
             - ノード側面の「+試薬」で横追加<br />
+            - <strong>Shift + ドラッグ</strong>で範囲選択<br />
+            - <strong>Shift + クリック</strong>で複数選択<br />
             <br />
             🔗 <strong>ノード同士をつなぐには:</strong><br />
             ノードにカーソルを合わせると<br />
@@ -368,7 +425,8 @@ export default function App() {
             nodeOrigin={[0.5, 0]}
             fitView
             selectionMode={SelectionMode.Partial}
-            selectNodesOnDrag={true}
+            multiSelectionKeyCode="Shift"
+            selectionKeyCode="Shift"
           >
             <Controls />
             <Background color="#aaa" gap={10} />
