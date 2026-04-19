@@ -17,6 +17,8 @@ import { ProcessNode } from './components/nodes/ProcessNode';
 import { ProcessEdge } from './components/edges/ProcessEdge';
 import { generateTexCode } from './lib/texGenerator';
 import { supabase } from './lib/supabase';
+import { LicensePage } from './components/LicensePage';
+import { HelpPage } from './components/HelpPage';
 
 const nodeTypes = { process: ProcessNode };
 const edgeTypes = { process_edge: ProcessEdge };
@@ -34,9 +36,19 @@ export default function App() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes as any);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
+  const [showLicense, setShowLicense] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  const [sideWidth, setSideWidth] = useState(600);
-  const [showOutput, setShowOutput] = useState(true);
+  const [panelHeight, setPanelHeight] = useState(250);
+  const [sideWidth, setSideWidth] = useState(450);
+  const [showOutput, setShowOutput] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 900);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // --- Resize Sidebar Logic ---
   const isResizing = useRef(false);
@@ -45,7 +57,7 @@ export default function App() {
     isResizing.current = true;
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', stopResizing);
-    document.body.style.cursor = 'col-resize';
+    document.body.style.cursor = window.innerWidth <= 900 ? 'row-resize' : 'col-resize';
     document.body.style.userSelect = 'none';
   }, []);
 
@@ -59,9 +71,16 @@ export default function App() {
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing.current) return;
-    const newWidth = window.innerWidth - e.clientX;
-    if (newWidth > 300 && newWidth < window.innerWidth * 0.8) {
-      setSideWidth(newWidth);
+    if (window.innerWidth <= 900) {
+      const newHeight = window.innerHeight - e.clientY;
+      if (newHeight > 100 && newHeight < window.innerHeight * 0.8) {
+        setPanelHeight(newHeight);
+      }
+    } else {
+      const newWidth = window.innerWidth - e.clientX;
+      if (newWidth > 200 && newWidth < window.innerWidth - 300) {
+        setSideWidth(newWidth);
+      }
     }
   }, []);
 
@@ -312,6 +331,9 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {showLicense && <LicensePage onClose={() => setShowLicense(false)} />}
+      {showHelp && <HelpPage onClose={() => setShowHelp(false)} />}
+      <div className="main-content">
       {/* Sidebar */}
       <div className="sidebar glass-panel">
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>ChemFlow-TeX</h2>
@@ -376,6 +398,15 @@ export default function App() {
             </button>
           )}
 
+          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+            <button className="btn-secondary" onClick={handleCopy} style={{ flex: 1, padding: '8px' }}>
+              📋 コピー
+            </button>
+            <button className="btn-secondary" onClick={handleDownload} style={{ flex: 1, padding: '8px' }}>
+              💾 .tex保存
+            </button>
+          </div>
+
           <button className="btn-primary" onClick={handleShare} style={{ marginTop: '10px' }}>
             🔗 共有リンクを発行
           </button>
@@ -384,23 +415,62 @@ export default function App() {
             🗑 キャンバスクリア
           </button>
 
-          <div style={{ marginTop: '20px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            💡 <strong>Hint:</strong><br />
-            - クリックで即編集モード（全選択）<br />
-            - ノード下の「↓追加」で縦に連結<br />
-            - ノード下の「⑂分岐」で分岐数を選択<br />
-            - 線の中央「+」ボタンで試薬を途中追加<br />
-            - 線の中央「🔄」で回り込みモード切替<br />
-            - ノード側面の「+試薬」で横追加<br />
-            - <strong>Shift + ドラッグ</strong>で範囲選択<br />
-            - <strong>Shift + クリック</strong>で複数選択<br />
-            <br />
-            🔗 <strong>ノード同士をつなぐには:</strong><br />
-            ノードにカーソルを合わせると<br />
-            上下に●（ハンドル）が表示されます。<br />
-            その●からドラッグして他のノードへ<br />
-            繋げると自由に接続できます。
+          <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setShowHelp(true)}
+              style={{
+                background: 'var(--panel-bg)',
+                border: '1px solid var(--panel-border)',
+                color: 'var(--text-primary)',
+                borderRadius: '6px',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                flex: 1,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }}
+            >
+              📘 使い方
+            </button>
+            <button
+              onClick={() => setShowLicense(true)}
+              style={{
+                background: 'var(--panel-bg)',
+                border: '1px solid var(--panel-border)',
+                color: 'var(--text-secondary)',
+                borderRadius: '6px',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                flex: 1,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }}
+            >
+              📄 ライセンス
+            </button>
           </div>
+
+          {!isMobile && (
+            <div style={{ marginTop: '20px', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '8px' }}>📘 使い方</div>
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>ノードの編集</span><br />
+                • ノードをクリックで編集<br />
+                • <code>↓追加</code> で連結、<code>⑂分岐</code> で分岐
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>試薬の追加</span><br />
+                • <code>+試薬</code> で横追加<br />
+                • 線の <code>+</code> で途中追加
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>操作</span><br />
+                • <code>🔄</code> で回り込み<br />
+                • ノードの ● からドラッグで自由接続<br />
+                • <kbd>Shift</kbd> + ドラッグで複数選択（合流可能）
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -433,41 +503,58 @@ export default function App() {
           </ReactFlow>
         </ReactFlowProvider>
       </div>
+      </div>
 
-      {/* Resize Handle */}
-      {showOutput && <div className="sidebar-resizer" onMouseDown={startResizing} />}
+      {/* Resize Handle (Hybrid) */}
+      {showOutput && (
+        <div 
+          className="sidebar-resizer" 
+          onMouseDown={startResizing} 
+          style={isMobile ? { height: '6px', width: '100%', cursor: 'row-resize' } : { width: '6px', height: '100%', cursor: 'col-resize' }}
+        />
+      )}
 
-      {/* Output pane */}
+      {/* Output pane (Hybrid PC/Mobile Drawer) */}
       <div
         className={`sidebar glass-panel output-sidebar ${showOutput ? 'open' : 'closed'}`}
         style={{
-          width: showOutput ? `${sideWidth}px` : '0px',
-          borderLeft: showOutput ? '1px solid var(--panel-border)' : 'none',
+          height: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : '100%',
+          width: isMobile ? '100%' : (showOutput ? `${sideWidth}px` : '0px'),
+          flexShrink: 0,
+          borderTop: isMobile && showOutput ? '1px solid var(--panel-border)' : 'none',
+          borderLeft: !isMobile && showOutput ? '1px solid var(--panel-border)' : 'none',
           borderRight: 'none',
-          transition: isResizing.current ? 'none' : 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          borderBottom: 'none',
+          transition: isResizing.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           padding: showOutput ? '20px' : '0px',
           opacity: 1,
           position: 'relative',
           overflow: 'visible',
           borderRadius: 0,
+          zIndex: 5,
         }}
       >
-        {/* Toggle Button (Tab Style) - Attached to the sidebar left edge */}
-        <button
-          className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
-          onClick={() => setShowOutput(!showOutput)}
-          title={showOutput ? "閉じる" : "TeX出力を表示"}
-          style={{
-            position: 'absolute',
-            left: '0px',
-            top: '50%',
-            transform: 'translate(-100%, -50%)',
-            zIndex: 1001,
-            transition: 'inherit',
-          }}
-        >
-          {showOutput ? '▶' : '◀'}
-        </button>
+        {/* Toggle Button (Tab Style) - Attached to either top edge or left edge */}
+        <div style={{ 
+          position: 'absolute', 
+          top: isMobile ? '0' : '50%', 
+          left: isMobile ? '50%' : '0', 
+          transform: isMobile ? 'translate(-50%, -100%)' : 'translate(-100%, -50%)', 
+          zIndex: 1001 
+        }}>
+          <button
+            className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
+            onClick={() => setShowOutput(!showOutput)}
+            title={showOutput ? "閉じる" : "TeX出力を表示"}
+            style={isMobile ? {
+              height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
+            } : {
+              width: '28px', height: '60px', borderRadius: '8px 0 0 8px', borderRight: 'none'
+            }}
+          >
+            {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
+          </button>
+        </div>
 
         {/* Content Wrapper (Controlled by showOutput) */}
         <div style={{

@@ -56,9 +56,29 @@ body {
 /* App Layout */
 .app-container {
   display: flex;
+  flex-direction: row; /* Default PC layout */
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .app-container {
+    flex-direction: column; /* Mobile stack */
+  }
+}
+
+.main-content {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0; /* allows children to scroll properly */
+}
+
+@media (max-width: 900px) {
+  .main-content {
+    flex-direction: column;
+  }
 }
 
 .sidebar {
@@ -66,9 +86,31 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
   border-right: 1px solid var(--panel-border);
   z-index: 10;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 120px;
+    padding: 10px 15px;
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid var(--panel-border);
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    overflow-y: visible;
+  }
+  
+  .sidebar h2 {
+    font-size: 1.1rem !important;
+    margin-right: auto;
+  }
 }
 
 .output-sidebar {
@@ -559,15 +601,13 @@ body {
   box-shadow: 0 0 10px var(--accent-color);
 }
 
-/* Sidebar Resizer */
+/* Sidebar Resizer (Hybrid PC/Mobile) */
 .sidebar-resizer {
-  width: 6px;
-  cursor: col-resize;
   background: transparent;
   z-index: 100;
   transition: background 0.2s;
-  margin-left: -3px;
-  margin-right: -3px;
+  /* Hover area padding */
+  margin: -3px;
 }
 
 .sidebar-resizer:hover, .sidebar-resizer:active {
@@ -575,14 +615,9 @@ body {
   opacity: 0.5;
 }
 
-/* Toggle Output Button (Tab Style) */
+/* Toggle Output Button (Hybrid PC/Mobile) */
 .toggle-output-btn {
-  width: 28px;
-  height: 60px;
   padding: 0;
-  border-radius: 8px 0 0 8px;
-  border: 1px solid var(--panel-border);
-  border-right: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -592,20 +627,13 @@ body {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: var(--accent-color);
-  box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s;
 }
 
 .toggle-output-btn:hover {
   background: var(--accent-color);
   color: white;
-  width: 32px;
-}
-
-.toggle-output-btn.open {
-  margin-right: -1px; /* サイドバーのボーダーと重ねて隙間を消す */
-}
-
-.toggle-output-btn.closed {
-  border-radius: 8px 0 0 8px;
-  border-right: 1px solid var(--panel-border);
+  transform: scale(1.05); /* Hover effect replaces strict height/width expansion */
 }
