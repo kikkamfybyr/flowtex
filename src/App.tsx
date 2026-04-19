@@ -10,6 +10,7 @@ import {
   Connection,
   SelectionMode,
 } from '@xyflow/react';
+import type { OnNodeDrag } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { ProcessNode } from './components/nodes/ProcessNode';
@@ -121,12 +122,12 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
 
-  const onNodeDragStop = useCallback((_: any, _node: any, nodesToUpdate: any[]) => {
+  const onNodeDragStop = useCallback<OnNodeDrag>((_event, _node, nodesToUpdate) => {
     takeSnapshot();
     // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ
     setNodes((nds) =>
       nds.map((n) => {
-        if (nodesToUpdate && nodesToUpdate.some((u) => u.id === n.id)) {
+        if (nodesToUpdate.some((u) => u.id === n.id)) {
           return {
             ...n,
             position: {

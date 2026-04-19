@@ -1,6 +1,6 @@
 # ChemFlow-TeX
 
-![ChemFlow-TeX](https://flowtex-six.vercel.app/) <!-- ここは実際のURLに合わせて変更してください -->
+[デモサイトはこちら](https://flowtex-six.vercel.app/)
 
 **ChemFlow-TeX** は、化学合成などのフローチャートを直感的な GUI で作成し、論文やレポートにそのまま使える高品質な **TikZ (LaTeX)** コードを即座に生成する Web アプリケーションです。
 
@@ -53,9 +53,9 @@
 
 ## 📝 TeX 出力の使い方
 
-生成された TikZ コードは `standalone` クラスを使用しています。`lualatex` または `uplatex` でコンパイルすることを想定しています。
+生成される `.tex` は `\\documentclass[class=jlreq, luatex, tikz, border=2mm]{standalone}` を含む自己完結形式です。単体コンパイルは `lualatex` を想定しています。
 
-他のドキュメントに埋め込む場合は、`tikzpicture` 環境の部分のみをコピーして貼り付けてください。スタイル定義（`\tikzset`）は `tikzpicture` のオプション内にカプセル化されているため、既存のスタイルと衝突しにくくなっています。
+他の文書に埋め込む場合は、出力内の `\\newcommand{\\addreagent}...` / `\\newcommand{\\addside}...` / `\\tikzset{...}` と `tikzpicture` 本体をあわせて移植してください（あわせて `mhchem`, `siunitx`, `arrows.meta, positioning, calc` の読み込みが必要です）。
 
 ## 📄 ライセンス
 

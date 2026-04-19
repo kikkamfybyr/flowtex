@@ -2,6 +2,10 @@ import { ChemNode, ChemEdge } from './types';
 
 export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string => {
   const processes = nodes.filter(n => n.type === 'process');
+  const processById = new Map(processes.map((process) => [process.id, process]));
+  const snappedXById = new Map(
+    processes.map((process) => [process.id, Math.round(process.position.x / 10) * 10])
+  );
 
   const X_SCALE = 60; 
   const Y_SCALE = 100; 
@@ -77,22 +81,20 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
   
   // 1. 通常の結線 (合流考慮)
   mergeGroups.forEach((incomingEdges, targetId) => {
-    const tgtNode = processes.find(p => p.id === targetId);
+    const tgtNode = processById.get(targetId);
     if (!tgtNode) return;
 
     // ソースのX座標（スナップ済）で左から順にソートする
     const sortedEdges = incomingEdges.sort((a, b) => {
-      const sa = processes.find(p => p.id === a.source);
-      const sb = processes.find(p => p.id === b.source);
-      const xa = sa ? Math.round(sa.position.x / 10) * 10 : 0;
-      const xb = sb ? Math.round(sb.position.x / 10) * 10 : 0;
+      const xa = snappedXById.get(a.source) ?? 0;
+      const xb = snappedXById.get(b.source) ?? 0;
       return xa - xb;
     });
 
     const isMerge = sortedEdges.length > 1;
 
     sortedEdges.forEach((edge, index) => {
-      const srcNode = processes.find(p => p.id === edge.source);
+      const srcNode = processById.get(edge.source);
       if (!srcNode) return;
 
       const edgeData = (edge.data as any) || {};
@@ -105,7 +107,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
         ? `($(${targetId}.north west)!${fraction}!(${targetId}.north east)$)`
         : `(${targetId}.north)`;
 
-      const srcSnapX = Math.round(srcNode.position.x / 10) * 10;
+      const srcSnapX = snappedXById.get(edge.source)!;
       const srcTx = parseFloat((srcSnapX / X_SCALE).toFixed(2));
 
       if (loopDir) {
@@ -118,7 +120,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
             `      (${edge.source}.south) -- (\\x1, \\y1-14pt) -- (${loopX}cm, \\y1-14pt) -- (${loopX}cm, \\y2+14pt) -- (\\x2, \\y2+14pt) -- ${targetAnchor};`
           );
       } else {
-          const tgtSnapX = Math.round(tgtNode.position.x / 10) * 10;
+          const tgtSnapX = snappedXById.get(targetId)!;
           const dx = Math.abs(srcSnapX - tgtSnapX);
           if (dx === 0 && !isMerge) {
               texParts.push(`    \\draw [thick] (${edge.source}.south) -- ${targetAnchor};`);
@@ -133,7 +135,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
   if (branchGroups.size > 0) {
     branchGroups.forEach((targets, sourceId) => {
       const splitCoord = `split_${sourceId}`;
-      const srcNode = processes.find(p => p.id === sourceId);
+      const srcNode = processById.get(sourceId);
       if (srcNode) {
         const offset = (srcNode.data as any).branchOffset ?? 60;
         const texOffset = -(offset / Y_SCALE).toFixed(2);
