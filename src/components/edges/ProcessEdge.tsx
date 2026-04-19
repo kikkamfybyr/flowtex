@@ -2,6 +2,27 @@ import { BaseEdge, EdgeLabelRenderer, EdgeProps, getSmoothStepPath, useReactFlow
 import { Position } from '@xyflow/react';
 import { useCallback } from 'react';
 
+const edgeDegreeCache = new WeakMap<object, {
+  sourceCounts: Map<string, number>;
+  targetCounts: Map<string, number>;
+}>();
+
+const getEdgeDegreeCounts = (edges: Array<{ source: string; target: string }>) => {
+  const cached = edgeDegreeCache.get(edges);
+  if (cached) return cached;
+
+  const sourceCounts = new Map<string, number>();
+  const targetCounts = new Map<string, number>();
+  edges.forEach((edge) => {
+    sourceCounts.set(edge.source, (sourceCounts.get(edge.source) || 0) + 1);
+    targetCounts.set(edge.target, (targetCounts.get(edge.target) || 0) + 1);
+  });
+
+  const counts = { sourceCounts, targetCounts };
+  edgeDegreeCache.set(edges, counts);
+  return counts;
+};
+
 export const ProcessEdge = ({
   id,
   source,
@@ -18,10 +39,13 @@ export const ProcessEdge = ({
   const edges = useEdges();
   const sourceNode = nodes.find(n => n.id === source);
   const branchOffset = (sourceNode?.data as any)?.branchOffset ?? 30;
+  const { sourceCounts, targetCounts } = getEdgeDegreeCounts(
+    edges as Array<{ source: string; target: string }>
+  );
 
   // 線の出入り本数を動的にカウント
-  const isActualBranch = edges.filter(e => e.source === source).length > 1;
-  const isActualMerge = edges.filter(e => e.target === target).length > 1;
+  const isActualBranch = (sourceCounts.get(source) || 0) > 1;
+  const isActualMerge = (targetCounts.get(target) || 0) > 1;
   const isComplexEdge = isActualBranch || isActualMerge;
 
   // データ上は分岐として生成されていても、1本道になったら通常の線として扱う
@@ -194,7 +218,7 @@ export const ProcessEdge = ({
     });
 
     const onPointerMove = (moveEvent: PointerEvent) => {
-      // スクリーン座標の差をフロー座標系の差に変換してカー汛ルに正確追従させる
+      // スクリーン座標の差をフロー座標系の差に変換してカーソルに正確追従させる
       const currentFlowPos = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY });
       const deltaY = currentFlowPos.y - startFlowPos.y;
       
