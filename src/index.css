@@ -83,6 +83,7 @@ body {
 
 .sidebar {
   width: 256px;
+  flex-shrink: 0; /* 開閉時に幅が変わらないように固定 */
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -369,7 +370,7 @@ body {
   padding: 12px;
   border-radius: 6px;
   font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 0.75rem;
+  font-size: 0.6rem;
   overflow-y: auto;
   white-space: pre-wrap;
   border: 1px solid var(--panel-border);
