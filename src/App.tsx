@@ -16,6 +16,9 @@ import { ProcessNode } from './components/nodes/ProcessNode';
 import { ProcessEdge } from './components/edges/ProcessEdge';
 import { generateTexCode } from './lib/texGenerator';
 import { supabase } from './lib/supabase';
+import { LicensePage } from './components/LicensePage';
+import { HelpPage } from './components/HelpPage';
+import { HelpPage } from './components/HelpPage';
 
 const nodeTypes = { process: ProcessNode };
 const edgeTypes = { process_edge: ProcessEdge };
@@ -33,8 +36,10 @@ export default function App() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes as any);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
+  const [showLicense, setShowLicense] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  const [sideWidth, setSideWidth] = useState(600);
+  const [panelHeight, setPanelHeight] = useState(250);
   const [showOutput, setShowOutput] = useState(true);
 
   // --- Resize Sidebar Logic ---
@@ -44,7 +49,7 @@ export default function App() {
     isResizing.current = true;
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', stopResizing);
-    document.body.style.cursor = 'col-resize';
+    document.body.style.cursor = 'row-resize';
     document.body.style.userSelect = 'none';
   }, []);
 
@@ -58,9 +63,9 @@ export default function App() {
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing.current) return;
-    const newWidth = window.innerWidth - e.clientX;
-    if (newWidth > 300 && newWidth < window.innerWidth * 0.8) {
-      setSideWidth(newWidth);
+    const newHeight = window.innerHeight - e.clientY;
+    if (newHeight > 100 && newHeight < window.innerHeight * 0.8) {
+      setPanelHeight(newHeight);
     }
   }, []);
 
@@ -311,6 +316,9 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {showLicense && <LicensePage onClose={() => setShowLicense(false)} />}
+      {showHelp && <HelpPage onClose={() => setShowHelp(false)} />}
+      <div className="main-content">
       {/* Sidebar */}
       <div className="sidebar glass-panel">
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>ChemFlow-TeX</h2>
@@ -383,22 +391,39 @@ export default function App() {
             🗑 キャンバスクリア
           </button>
 
-          <div style={{ marginTop: '20px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            💡 <strong>Hint:</strong><br />
-            - クリックで即編集モード（全選択）<br />
-            - ノード下の「↓追加」で縦に連結<br />
-            - ノード下の「⑂分岐」で分岐数を選択<br />
-            - 線の中央「+」ボタンで試薬を途中追加<br />
-            - 線の中央「🔄」で回り込みモード切替<br />
-            - ノード側面の「+試薬」で横追加<br />
-            - <strong>Shift + ドラッグ</strong>で範囲選択<br />
-            - <strong>Shift + クリック</strong>で複数選択<br />
-            <br />
-            🔗 <strong>ノード同士をつなぐには:</strong><br />
-            ノードにカーソルを合わせると<br />
-            上下に●（ハンドル）が表示されます。<br />
-            その●からドラッグして他のノードへ<br />
-            繋げると自由に接続できます。
+          <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setShowHelp(true)}
+              style={{
+                background: 'var(--panel-bg)',
+                border: '1px solid var(--panel-border)',
+                color: 'var(--text-primary)',
+                borderRadius: '6px',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                flex: 1,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }}
+            >
+              📘 使い方
+            </button>
+            <button
+              onClick={() => setShowLicense(true)}
+              style={{
+                background: 'var(--panel-bg)',
+                border: '1px solid var(--panel-border)',
+                color: 'var(--text-secondary)',
+                borderRadius: '6px',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                flex: 1,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }}
+            >
+              📄 ライセンス
+            </button>
           </div>
         </div>
       </div>
@@ -432,18 +457,21 @@ export default function App() {
           </ReactFlow>
         </ReactFlowProvider>
       </div>
+      </div>
 
-      {/* Resize Handle */}
+      {/* Resize Handle (Horizontal for bottom drawer) */}
       {showOutput && <div className="sidebar-resizer" onMouseDown={startResizing} />}
 
-      {/* Output pane */}
+      {/* Output pane (Bottom Drawer) */}
       <div
         className={`sidebar glass-panel output-sidebar ${showOutput ? 'open' : 'closed'}`}
         style={{
-          width: showOutput ? `${sideWidth}px` : '0px',
-          borderLeft: showOutput ? '1px solid var(--panel-border)' : 'none',
+          height: showOutput ? `${panelHeight}px` : '0px',
+          width: '100%',
+          borderTop: showOutput ? '1px solid var(--panel-border)' : 'none',
           borderRight: 'none',
-          transition: isResizing.current ? 'none' : 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          borderLeft: 'none',
+          transition: isResizing.current ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           padding: showOutput ? '20px' : '0px',
           opacity: 1,
           position: 'relative',
@@ -451,22 +479,16 @@ export default function App() {
           borderRadius: 0,
         }}
       >
-        {/* Toggle Button (Tab Style) - Attached to the sidebar left edge */}
-        <button
-          className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
-          onClick={() => setShowOutput(!showOutput)}
-          title={showOutput ? "閉じる" : "TeX出力を表示"}
-          style={{
-            position: 'absolute',
-            left: '0px',
-            top: '50%',
-            transform: 'translate(-100%, -50%)',
-            zIndex: 1001,
-            transition: 'inherit',
-          }}
-        >
-          {showOutput ? '▶' : '◀'}
-        </button>
+        {/* Toggle Button (Tab Style) - Attached to the top edge */}
+        <div style={{ position: 'absolute', top: '0', left: '50%', transform: 'translate(-50%, -100%)', zIndex: 1001 }}>
+          <button
+            className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
+            onClick={() => setShowOutput(!showOutput)}
+            title={showOutput ? "閉じる" : "TeX出力を表示"}
+          >
+            {showOutput ? '▼' : '▲'}
+          </button>
+        </div>
 
         {/* Content Wrapper (Controlled by showOutput) */}
         <div style={{
