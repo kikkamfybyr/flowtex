@@ -531,12 +531,30 @@ export default function App() {
       </div>
       </div>
 
-      {/* Resize Handle (Hybrid) */}
+      {/* Resize Handle (Hybrid Overlay) */}
       {showOutput && (
         <div 
           className="sidebar-resizer" 
           onMouseDown={startResizing} 
-          style={isMobile ? { height: '6px', width: '100%', cursor: 'row-resize' } : { width: '6px', height: '100%', cursor: 'col-resize' }}
+          style={isMobile ? { 
+            position: 'absolute',
+            bottom: `${panelHeight}px`,
+            left: 0,
+            right: 0,
+            height: '8px', 
+            cursor: 'row-resize',
+            zIndex: 1100,
+            background: 'transparent'
+          } : { 
+            position: 'absolute',
+            right: `${sideWidth}px`,
+            top: 0,
+            bottom: 0,
+            width: '8px', 
+            cursor: 'col-resize',
+            zIndex: 1100,
+            background: 'transparent'
+          }}
         />
       )}
 
