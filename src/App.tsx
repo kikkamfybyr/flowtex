@@ -339,7 +339,7 @@ export default function App() {
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>ChemFlow-TeX</h2>
 
         <div className="sidebar-tools">
-          <h4>ノード追加</h4>
+          {!isMobile && <h4>ノード追加</h4>}
           <div
             className="chem-node node-process"
             draggable
@@ -494,6 +494,7 @@ export default function App() {
             snapGrid={[10, 10]}
             nodeOrigin={[0.5, 0]}
             fitView
+            fitViewOptions={{ padding: 0.2, maxZoom: 0.8 }}
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"

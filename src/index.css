@@ -114,10 +114,28 @@ body {
   
   .sidebar-tools {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
     align-items: center;
     width: 100%;
-    margin-top: 5px;
+    gap: 8px;
+    padding-bottom: 5px; /* for scrollbar */
+    scrollbar-width: none; /* Hide scrollbar for cleaner look */
+  }
+  .sidebar-tools::-webkit-scrollbar { display: none; }
+
+  .sidebar-tools button {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .sidebar-tools .chem-node {
+    padding: 6px 10px;
+    min-width: auto;
+    font-size: 0.75rem;
+    white-space: nowrap;
   }
 
   .sidebar h2 {
