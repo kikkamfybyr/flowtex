@@ -338,7 +338,7 @@ export default function App() {
       <div className="sidebar glass-panel">
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>ChemFlow-TeX</h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="sidebar-tools">
           <h4>ノード追加</h4>
           <div
             className="chem-node node-process"
@@ -392,13 +392,13 @@ export default function App() {
                 setNodes(nds => nds.concat(newNode as any));
                 setEdges(eds => eds.concat(newEdges as any));
               }} 
-              style={{ marginTop: '10px', backgroundColor: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+              style={{ backgroundColor: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
             >
               ↓ 選択項目を合流
             </button>
           )}
 
-          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn-secondary" onClick={handleCopy} style={{ flex: 1, padding: '8px' }}>
               📋 コピー
             </button>
@@ -407,15 +407,15 @@ export default function App() {
             </button>
           </div>
 
-          <button className="btn-primary" onClick={handleShare} style={{ marginTop: '10px' }}>
+          <button className="btn-primary" onClick={handleShare}>
             🔗 共有リンクを発行
           </button>
 
-          <button className="btn-danger" onClick={handleClear} style={{ marginTop: '10px' }}>
+          <button className="btn-danger" onClick={handleClear}>
             🗑 キャンバスクリア
           </button>
 
-          <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={() => setShowHelp(true)}
               style={{
@@ -446,7 +446,7 @@ export default function App() {
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
             >
-              📄 ライセンス
+              📄 License
             </button>
           </div>
 

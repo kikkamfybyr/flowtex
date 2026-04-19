@@ -92,11 +92,16 @@ body {
   overflow-y: auto;
 }
 
+.sidebar-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 @media (max-width: 900px) {
   .sidebar {
     width: 100%;
     height: auto;
-    max-height: 120px;
     padding: 10px 15px;
     flex-direction: row;
     border-right: none;
@@ -107,6 +112,14 @@ body {
     overflow-y: visible;
   }
   
+  .sidebar-tools {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    margin-top: 5px;
+  }
+
   .sidebar h2 {
     font-size: 1.1rem !important;
     margin-right: auto;
