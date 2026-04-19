@@ -424,10 +424,10 @@ export default function App() {
           )}
 
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="btn-secondary" onClick={handleCopy} style={{ flex: 1, padding: '8px' }}>
+            <button className="btn-secondary" onClick={handleCopy} style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>
               📋 コピー
             </button>
-            <button className="btn-secondary" onClick={handleDownload} style={{ flex: 1, padding: '8px' }}>
+            <button className="btn-secondary" onClick={handleDownload} style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>
               💾 .tex保存
             </button>
           </div>
@@ -450,7 +450,7 @@ export default function App() {
                 borderRadius: '6px',
                 padding: '4px 8px',
                 cursor: 'pointer',
-                fontSize: '0.7rem',
+                fontSize: '0.85rem',
                 flex: 1,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
@@ -466,7 +466,7 @@ export default function App() {
                 borderRadius: '6px',
                 padding: '4px 8px',
                 cursor: 'pointer',
-                fontSize: '0.7rem',
+                fontSize: '0.85rem',
                 flex: 1,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
@@ -519,7 +519,7 @@ export default function App() {
             snapGrid={[10, 10]}
             nodeOrigin={[0.5, 0]}
             fitView
-            fitViewOptions={{ padding: 0.1, maxZoom: 1.5 }}
+            fitViewOptions={{ padding: 0.1, maxZoom: 1.3 }}
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
@@ -558,7 +558,33 @@ export default function App() {
         />
       )}
 
-      {/* Output pane (Hybrid PC/Mobile Drawer) */}
+      {/* Toggle Button - パネルの外に独立して配置（pointerEventsの影響を受けない） */}
+      <div style={{
+        position: 'absolute',
+        top: isMobile ? 'auto' : '50%',
+        bottom: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : 'auto',
+        right: isMobile ? 'auto' : (showOutput ? `${sideWidth}px` : '0px'),
+        left: isMobile ? '50%' : 'auto',
+        transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
+        zIndex: 1100,
+        pointerEvents: 'auto',
+        transition: isResizing.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}>
+        <button
+          className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
+          onClick={() => setShowOutput(!showOutput)}
+          title={showOutput ? "閉じる" : "TeX出力を表示"}
+          style={isMobile ? {
+            height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
+          } : {
+            width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none'
+          }}
+        >
+          {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
+        </button>
+      </div>
+
+      {/* Output pane (Hybrid PC/Mobile Drawer overlay) */}
       <div
         className={`sidebar glass-panel output-sidebar ${showOutput ? 'open' : 'closed'}`}
         style={{
@@ -575,34 +601,12 @@ export default function App() {
           borderBottom: 'none',
           transition: isResizing.current ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           padding: showOutput ? '20px' : '0px',
-          overflow: 'visible',
+          overflow: 'hidden', /* 閉じている時は内容をクリップ */
           borderRadius: 0,
+          zIndex: 1000,
           pointerEvents: showOutput ? 'auto' : 'none',
         }}
       >
-        {/* Toggle Button (Tab Style) - Attached to either top edge or left edge */}
-        <div style={{ 
-          position: 'absolute', 
-          top: isMobile ? '0' : '50%', 
-          left: isMobile ? '50%' : '0', 
-          transform: isMobile ? 'translate(-50%, -100%)' : 'translate(-100%, -50%)', 
-          zIndex: 1001,
-          pointerEvents: 'auto' /* ボタンは常にクリック可能 */
-        }}>
-          <button
-            className={`toggle-output-btn glass-panel ${showOutput ? 'open' : 'closed'}`}
-            onClick={() => setShowOutput(!showOutput)}
-            title={showOutput ? "閉じる" : "TeX出力を表示"}
-            style={isMobile ? {
-              height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
-            } : {
-              width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none'
-            }}
-          >
-            {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
-          </button>
-        </div>
-
         {/* Content Wrapper (Controlled by showOutput) */}
         <div style={{
           opacity: showOutput ? 1 : 0,
