@@ -336,10 +336,35 @@ export default function App() {
       <div className="main-content">
       {/* Sidebar */}
       <div className="sidebar glass-panel">
-        <h2 style={{ fontSize: '1.0rem', fontWeight: 600 }}>ChemFlow-TeX</h2>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          padding: '4px 0',
+          marginBottom: '5px'
+        }}>
+          <div style={{
+            fontSize: '1.1rem',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            background: 'linear-gradient(135deg, var(--accent-color), #8b5cf6)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            display: 'inline-block'
+          }}>
+            ChemFlow
+          </div>
+          <div style={{
+            fontSize: '0.9rem',
+            fontWeight: 400,
+            color: 'var(--text-secondary)',
+            opacity: 0.8
+          }}>
+            -TeX
+          </div>
+        </div>
 
         <div className="sidebar-tools">
-          {!isMobile && <h4 style={{ fontSize: '0.85rem' }}>ノード追加</h4>}
           <div
             className="chem-node node-process"
             draggable
@@ -423,9 +448,9 @@ export default function App() {
                 border: '1px solid var(--panel-border)',
                 color: 'var(--text-primary)',
                 borderRadius: '6px',
-                padding: '6px 10px',
+                padding: '4px 8px',
                 cursor: 'pointer',
-                fontSize: '0.8rem',
+                fontSize: '0.7rem',
                 flex: 1,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
@@ -439,9 +464,9 @@ export default function App() {
                 border: '1px solid var(--panel-border)',
                 color: 'var(--text-secondary)',
                 borderRadius: '6px',
-                padding: '6px 10px',
+                padding: '4px 8px',
                 cursor: 'pointer',
-                fontSize: '0.8rem',
+                fontSize: '0.7rem',
                 flex: 1,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
@@ -550,7 +575,7 @@ export default function App() {
             style={isMobile ? {
               height: '24px', width: '50px', borderRadius: '8px 8px 0 0', borderBottom: 'none'
             } : {
-              width: '24px', height: '50px', borderRadius: '8px 0 0 8px', borderRight: 'none'
+              width: '20px', height: '40px', borderRadius: '6px 0 0 6px', borderRight: 'none'
             }}
           >
             {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
@@ -567,19 +592,19 @@ export default function App() {
           transition: 'opacity 0.2s ease',
           width: '100%',
         }}>
-          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', fontSize: '0.85rem', marginBottom: '8px' }}>
+          <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap', fontSize: '0.75rem', marginBottom: '8px' }}>
             生成された TeX
             <div style={{ display: 'flex', gap: '6px' }}>
               <button
                 className="btn-primary"
-                style={{ padding: '4px 10px', fontSize: '11px' }}
+                style={{ padding: '4px 10px', fontSize: '10.5px' }}
                 onClick={handleDownload}
               >
                 保存
               </button>
               <button
                 className="btn-secondary"
-                style={{ padding: '4px 10px', fontSize: '11px' }}
+                style={{ padding: '4px 10px', fontSize: '10.5px' }}
                 onClick={handleCopy}
               >
                 コピー

@@ -334,9 +334,9 @@ body {
   color: white;
   border: none;
   border-radius: 6px;
-  padding: 8px 14px;
+  padding: 6px 12px;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -549,10 +549,10 @@ body {
   background: var(--panel-bg);
   color: var(--text-primary);
   border: 1px solid var(--panel-border);
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   transition: all 0.2s ease;
 }
 
@@ -570,10 +570,10 @@ body {
   background: #ef4444;
   color: white;
   border: none;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
   transition: all 0.2s ease;
 }
