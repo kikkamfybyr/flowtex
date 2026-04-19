@@ -82,15 +82,16 @@ body {
 }
 
 .sidebar {
-  width: 256px;
+  width: 216px;
   flex-shrink: 0; /* 開閉時に幅が変わらないように固定 */
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   border-right: 1px solid var(--panel-border);
   z-index: 10;
   overflow-y: auto;
+  font-size: 0.7rem;
 }
 
 .sidebar-tools {
