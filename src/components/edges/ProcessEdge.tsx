@@ -29,6 +29,11 @@ export const ProcessEdge = ({
   // X座標の差
   const dx = Math.abs(sourceX - targetX);
 
+  // 線の出入り本数を動的にカウント
+  const isActualBranch = edges.filter(e => e.source === source).length > 1;
+  const isActualMerge = edges.filter(e => e.target === target).length > 1;
+  const isComplexEdge = isActualBranch || isActualMerge;
+
   // 1. 分岐パス（縦→横→縦）
   // ユーザーがドラッグで調整可能なオフセットを使用
   const branchMidY = sourceY + branchOffset;
@@ -186,7 +191,7 @@ export const ProcessEdge = ({
     });
 
     const onPointerMove = (moveEvent: PointerEvent) => {
-      // スクリーン座標の差をフロー座標系の差に変換してカーソルに正確追従させる
+      // スクリーン座標の差をフロー座標系の差に変換してカー汛ルに正確追従させる
       const currentFlowPos = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY });
       const deltaY = currentFlowPos.y - startFlowPos.y;
       
@@ -304,7 +309,7 @@ export const ProcessEdge = ({
           }}
           className="edge-tool-group nodrag nopan"
         >
-          {!isBranch && (
+          {!isComplexEdge && (
             <>
               <button
                 className="add-edge-reagent-btn"
