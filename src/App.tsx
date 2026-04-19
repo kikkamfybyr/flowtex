@@ -117,9 +117,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
 
-  const onNodeDragStop = useCallback<OnNodeDrag>((event, node, nodesToUpdate) => {
-    void event;
-    void node;
+  const onNodeDragStop = useCallback<OnNodeDrag>((_event, _node, nodesToUpdate) => {
     takeSnapshot();
     // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ
     setNodes((nds) =>

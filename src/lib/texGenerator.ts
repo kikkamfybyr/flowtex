@@ -107,7 +107,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
         ? `($(${targetId}.north west)!${fraction}!(${targetId}.north east)$)`
         : `(${targetId}.north)`;
 
-      const srcSnapX = snappedXById.get(edge.source) ?? Math.round(srcNode.position.x / 10) * 10;
+      const srcSnapX = snappedXById.get(edge.source)!;
       const srcTx = parseFloat((srcSnapX / X_SCALE).toFixed(2));
 
       if (loopDir) {
@@ -120,7 +120,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
             `      (${edge.source}.south) -- (\\x1, \\y1-14pt) -- (${loopX}cm, \\y1-14pt) -- (${loopX}cm, \\y2+14pt) -- (\\x2, \\y2+14pt) -- ${targetAnchor};`
           );
       } else {
-          const tgtSnapX = snappedXById.get(targetId) ?? Math.round(tgtNode.position.x / 10) * 10;
+          const tgtSnapX = snappedXById.get(targetId)!;
           const dx = Math.abs(srcSnapX - tgtSnapX);
           if (dx === 0 && !isMerge) {
               texParts.push(`    \\draw [thick] (${edge.source}.south) -- ${targetAnchor};`);
