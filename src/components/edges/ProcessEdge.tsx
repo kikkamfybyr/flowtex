@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 export const ProcessEdge = ({
   id,
   source,
+  target,
   sourceX,
   sourceY,
   targetX,
