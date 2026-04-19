@@ -56,10 +56,16 @@ body {
 /* App Layout */
 .app-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* Default PC layout */
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .app-container {
+    flex-direction: column; /* Mobile stack */
+  }
 }
 
 .main-content {

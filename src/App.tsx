@@ -520,6 +520,7 @@ export default function App() {
         style={{
           height: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : '100%',
           width: isMobile ? '100%' : (showOutput ? `${sideWidth}px` : '0px'),
+          flexShrink: 0,
           borderTop: isMobile && showOutput ? '1px solid var(--panel-border)' : 'none',
           borderLeft: !isMobile && showOutput ? '1px solid var(--panel-border)' : 'none',
           borderRight: 'none',
@@ -530,6 +531,7 @@ export default function App() {
           position: 'relative',
           overflow: 'visible',
           borderRadius: 0,
+          zIndex: 5,
         }}
       >
         {/* Toggle Button (Tab Style) - Attached to either top edge or left edge */}
