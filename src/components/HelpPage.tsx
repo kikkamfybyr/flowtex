@@ -1,6 +1,56 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export const HelpPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== 'Tab' || !dialogRef.current) {
+        return;
+      }
+
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (focusable.length === 0) {
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (!active || !dialogRef.current.contains(active)) {
+        event.preventDefault();
+        first.focus();
+        return;
+      }
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
   return (
     <div
       style={{
@@ -17,6 +67,11 @@ export const HelpPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="help-dialog-title"
+        tabIndex={-1}
         style={{
           background: 'var(--panel-bg)',
           border: '1px solid var(--panel-border)',
@@ -38,9 +93,11 @@ export const HelpPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>📘 使い方ガイド</h2>
+          <h2 id="help-dialog-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>📘 使い方ガイド</h2>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
+            aria-label="ヘルプモーダルを閉じる"
             style={{
               background: 'none',
               border: '1px solid var(--panel-border)',
