@@ -66,6 +66,7 @@ body {
 @media (max-width: 900px) {
   .app-container {
     flex-direction: column; /* Mobile stack */
+    height: 100dvh; /* ブラウザのUI（アドレスバー等）を除いた実際の表示領域に合わせる */
   }
 }
 
