@@ -342,12 +342,12 @@ export default function App() {
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: '12px', 
-          padding: '8px 0',
-          marginBottom: '10px'
+          gap: isMobile ? '6px' : '12px', 
+          padding: isMobile ? '2px 0' : '8px 0',
+          marginBottom: isMobile ? '4px' : '10px'
         }}>
           <div style={{
-            fontSize: '1.65rem',
+            fontSize: isMobile ? '1.1rem' : '1.65rem',
             fontWeight: 800,
             letterSpacing: '-0.02em',
             background: 'linear-gradient(135deg, var(--accent-color), #8b5cf6)',
@@ -358,7 +358,7 @@ export default function App() {
             ChemFlow
           </div>
           <div style={{
-            fontSize: '1.65rem',
+            fontSize: isMobile ? '1.1rem' : '1.65rem',
             fontWeight: 600,
             color: 'var(--text-secondary)',
             opacity: 0.9

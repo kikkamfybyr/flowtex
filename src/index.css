@@ -113,6 +113,7 @@ body {
     flex-wrap: wrap;
     align-items: center;
     overflow-y: visible;
+    font-size: 0.75rem; /* モバイル時に文字を縮小 */
   }
   
   .sidebar-tools {
@@ -120,8 +121,8 @@ body {
     flex-wrap: wrap; /* ボタン単位で折り返す */
     align-items: center;
     width: 100%;
-    gap: 8px;
-    margin-top: 5px;
+    gap: 6px;
+    margin-top: 4px;
   }
 
   .sidebar-tools button {
@@ -133,10 +134,28 @@ body {
     white-space: nowrap;
   }
 
+  /* モバイル時のボタンサイズを縮小 */
+  .sidebar .btn-primary,
+  .sidebar .btn-secondary,
+  .sidebar .btn-danger {
+    padding: 5px 10px !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* モバイル時の共有・クリアなどの個別ボタンも縮小 */
+  .sidebar button {
+    font-size: 0.75rem;
+    padding: 5px 8px;
+  }
 
   .sidebar h2 {
-    font-size: 1.1rem !important;
+    font-size: 1rem !important;
     margin-right: auto;
+  }
+
+  /* モバイル時のロゴを縮小 */
+  .sidebar [style*="1.65rem"] {
+    font-size: 1.1rem !important;
   }
 }
 
