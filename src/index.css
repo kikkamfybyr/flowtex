@@ -299,7 +299,6 @@ body {
   justify-content: center;
   z-index: 50;
   opacity: 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -459,7 +458,6 @@ body {
   justify-content: center;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   transition: transform 0.1s;
 }
 .add-edge-reagent-btn:hover {
@@ -635,7 +633,6 @@ body {
 
 .btn-danger:hover {
   background: #dc2626;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 .edge-loop-toggle {
   background: none;
@@ -708,7 +705,6 @@ body {
   -webkit-backdrop-filter: blur(8px);
   color: var(--accent-color);
   border: 1px solid var(--panel-border);
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
   transition: all 0.2s;
 }
 
