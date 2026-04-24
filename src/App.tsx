@@ -541,7 +541,7 @@ export default function App() {
           className="sidebar-resizer" 
           onMouseDown={startResizing} 
           style={isMobile ? { 
-            position: 'absolute',
+            position: 'fixed',
             bottom: `${panelHeight}px`,
             left: 0,
             right: 0,
@@ -564,7 +564,7 @@ export default function App() {
 
       {/* Toggle Button - パネルの外に独立して配置（pointerEventsの影響を受けない） */}
       <div style={{
-        position: 'absolute',
+        position: isMobile ? 'fixed' : 'absolute',
         top: isMobile ? 'auto' : '50%',
         bottom: isMobile
           ? (showOutput ? `calc(${panelHeight}px)` : 'calc(env(safe-area-inset-bottom, 16px) + 8px)')
@@ -604,6 +604,7 @@ export default function App() {
           bottom: isMobile ? 0 : 'auto',
           top: isMobile ? 'auto' : 0,
           left: isMobile ? 0 : 'auto',
+          position: isMobile ? 'fixed' : undefined,
           height: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : '100%',
           width: isMobile ? '100%' : (showOutput ? `${sideWidth}px` : '0px'),
           flexShrink: 0,
