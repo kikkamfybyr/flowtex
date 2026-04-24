@@ -36,3 +36,7 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+tsconfig.tsbuildinfo
+tsconfig.node.tsbuildinfo
+vite.config.d.ts
+vite.config.js
