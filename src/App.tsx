@@ -567,7 +567,7 @@ export default function App() {
         position: isMobile ? 'fixed' : 'absolute',
         top: isMobile ? 'auto' : '50%',
         bottom: isMobile
-          ? (showOutput ? `calc(${panelHeight}px)` : 'env(safe-area-inset-bottom, 0px)')
+          ? (showOutput ? `calc(${panelHeight}px)` : '0px')
           : 'auto',
         right: isMobile ? 'auto' : (showOutput ? `${sideWidth}px` : '0px'),
         left: isMobile ? '50%' : 'auto',
