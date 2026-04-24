@@ -604,7 +604,7 @@ export default function App() {
           bottom: isMobile ? 0 : 'auto',
           top: isMobile ? 'auto' : 0,
           left: isMobile ? 0 : 'auto',
-          position: isMobile ? 'fixed' : undefined,
+          position: isMobile ? 'fixed' : 'absolute',
           height: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : '100%',
           width: isMobile ? '100%' : (showOutput ? `${sideWidth}px` : '0px'),
           flexShrink: 0,
