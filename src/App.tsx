@@ -567,7 +567,7 @@ export default function App() {
         position: isMobile ? 'fixed' : 'absolute',
         top: isMobile ? 'auto' : '50%',
         bottom: isMobile
-          ? (showOutput ? `calc(${panelHeight}px)` : '0px')
+          ? (showOutput ? `calc(${panelHeight}px)` : 'env(safe-area-inset-bottom, 0px)')
           : 'auto',
         right: isMobile ? 'auto' : (showOutput ? `${sideWidth}px` : '0px'),
         left: isMobile ? '50%' : 'auto',
@@ -586,7 +586,7 @@ export default function App() {
           aria-controls={outputPanelId}
           title={showOutput ? "閉じる" : "TeX出力を表示"}
           style={isMobile ? {
-            height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none', pointerEvents: 'auto'
+            height: '36px', width: '120px', borderRadius: '8px 8px 0 0', borderBottom: 'none', pointerEvents: 'auto'
           } : {
             width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none', pointerEvents: 'auto'
           }}
