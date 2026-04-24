@@ -586,9 +586,9 @@ export default function App() {
           aria-controls={outputPanelId}
           title={showOutput ? "閉じる" : "TeX出力を表示"}
           style={isMobile ? {
-            height: '36px', width: '120px', borderRadius: '8px 8px 0 0', borderBottom: 'none', pointerEvents: 'auto'
+            height: '36px', width: '60vw', borderRadius: '8px 8px 0 0', borderBottom: 'none', pointerEvents: 'auto'
           } : {
-            width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none', pointerEvents: 'auto'
+            width: '56px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none', pointerEvents: 'auto'
           }}
         >
           {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
