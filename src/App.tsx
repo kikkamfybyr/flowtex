@@ -526,6 +526,7 @@ export default function App() {
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
+            preventScrolling={true}
           >
             <Controls />
             <Background color="#aaa" gap={10} />
@@ -565,7 +566,9 @@ export default function App() {
       <div style={{
         position: 'absolute',
         top: isMobile ? 'auto' : '50%',
-        bottom: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : 'auto',
+        bottom: isMobile
+          ? (showOutput ? `calc(${panelHeight}px)` : 'calc(env(safe-area-inset-bottom, 16px) + 8px)')
+          : 'auto',
         right: isMobile ? 'auto' : (showOutput ? `${sideWidth}px` : '0px'),
         left: isMobile ? '50%' : 'auto',
         transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',

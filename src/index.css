@@ -193,6 +193,7 @@ body {
   position: relative;
   height: 100%;
   width: 100%;
+  touch-action: none; /* タッチ操作時のページスクロールを無効化 */
 }
 
 /* React Flowのノードwrapperがoverflow:hiddenにより削除ボタンをクリップするのを防ぐ */
