@@ -373,7 +373,7 @@ export default function App() {
             draggable
             onDragStart={(e) => e.dataTransfer.setData('application/reactflow', 'process')}
             onClick={addProcessNodeClicked}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', boxShadow: 'none' }}
           >
             ＋ プロセスを追加
           </div>
@@ -455,7 +455,6 @@ export default function App() {
                 cursor: 'pointer',
                 fontSize: '0.85rem',
                 flex: 1,
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
             >
               📘 使い方
@@ -471,7 +470,6 @@ export default function App() {
                 cursor: 'pointer',
                 fontSize: '0.85rem',
                 flex: 1,
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
             >
               📄 License
