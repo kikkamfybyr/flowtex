@@ -193,13 +193,8 @@ body {
 }
 
 /* React Flow コントロールパネルのセーフエリア対応 */
-.react-flow__controls {
-  margin-bottom: env(safe-area-inset-bottom, 0px);
-}
-
 @media (max-width: 900px) {
   /* モバイル時: ナビゲーションバーに隠れないよう上にずらす */
-  /* margin-bottom をリセットし、bottom のみで位置を制御してセーフエリアの二重適用を防ぐ */
   .react-flow__controls {
     margin-bottom: 0 !important;
     bottom: calc(8px + env(safe-area-inset-bottom, 16px)) !important;
