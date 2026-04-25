@@ -288,16 +288,23 @@ export default function App() {
         await writable.write(texCode);
         await writable.close();
       } else {
-        // type を octet-stream にすることで Safari がブラウザで開かず強制ダウンロードする
-        const blob = new Blob([texCode], { type: 'application/octet-stream' });
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        const blob = new Blob([texCode], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'flowchart.tex';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        if (isIOS) {
+          // iOS Safari は <a download> を無視するため新しいタブで開き
+          // シェアシート → "ファイルに保存" で保存できるよう案内する
+          window.open(url, '_blank');
+          alert('新しいタブが開きます。\n画面下の共有ボタン（□↑）から「ファイルに保存」を選んでください。');
+        } else {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'flowchart.tex';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
