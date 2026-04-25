@@ -1,7 +1,7 @@
 :root {
   --bg-color: #f3f4f6;
   --panel-bg: rgba(255, 255, 255, 0.7);
-  --panel-border: rgba(255, 255, 255, 0.4);
+  --panel-border: rgba(0, 0, 0, 0.18);
   --text-primary: #1f2937;
   --text-secondary: #4b5563;
   --accent-color: #3b82f6;
@@ -57,7 +57,7 @@ body {
 .app-container {
   display: flex;
   flex-direction: row; /* Default PC layout */
-  height: 100vh;
+  height: 100dvh; /* Fits to the actual visible area, excluding browser UI chrome (address bar, nav bar, etc.) */
   width: 100vw;
   overflow: hidden;
   position: relative; /* 子要素のオーバーレイ用 */
@@ -113,6 +113,7 @@ body {
     flex-wrap: wrap;
     align-items: center;
     overflow-y: visible;
+    font-size: 0.75rem; /* モバイル時に文字を縮小 */
   }
   
   .sidebar-tools {
@@ -120,8 +121,8 @@ body {
     flex-wrap: wrap; /* ボタン単位で折り返す */
     align-items: center;
     width: 100%;
-    gap: 8px;
-    margin-top: 5px;
+    gap: 6px;
+    margin-top: 4px;
   }
 
   .sidebar-tools button {
@@ -133,11 +134,25 @@ body {
     white-space: nowrap;
   }
 
+  /* モバイル時のボタンサイズを縮小 */
+  .sidebar .btn-primary,
+  .sidebar .btn-secondary,
+  .sidebar .btn-danger {
+    padding: 5px 10px !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* モバイル時の共有・クリアなどの個別ボタンも縮小 */
+  .sidebar button {
+    font-size: 0.75rem;
+    padding: 5px 8px;
+  }
 
   .sidebar h2 {
-    font-size: 1.1rem !important;
+    font-size: 1rem !important;
     margin-right: auto;
   }
+
 }
 
 .output-sidebar {
@@ -174,6 +189,16 @@ body {
   position: relative;
   height: 100%;
   width: 100%;
+  touch-action: none; /* タッチ操作時のページスクロールを無効化 */
+}
+
+/* React Flow コントロールパネルのセーフエリア対応 */
+@media (max-width: 900px) {
+  /* モバイル時: ナビゲーションバーに隠れないよう上にずらす */
+  .react-flow__controls {
+    margin-bottom: 0 !important;
+    bottom: calc(8px + env(safe-area-inset-bottom, 16px)) !important;
+  }
 }
 
 /* React Flowのノードwrapperがoverflow:hiddenにより削除ボタンをクリップするのを防ぐ */
@@ -269,7 +294,6 @@ body {
   justify-content: center;
   z-index: 50;
   opacity: 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -429,7 +453,6 @@ body {
   justify-content: center;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   transition: transform 0.1s;
 }
 .add-edge-reagent-btn:hover {
@@ -605,7 +628,6 @@ body {
 
 .btn-danger:hover {
   background: #dc2626;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 .edge-loop-toggle {
   background: none;
@@ -678,7 +700,6 @@ body {
   -webkit-backdrop-filter: blur(8px);
   color: var(--accent-color);
   border: 1px solid var(--panel-border);
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
   transition: all 0.2s;
 }
 

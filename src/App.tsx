@@ -288,15 +288,23 @@ export default function App() {
         await writable.write(texCode);
         await writable.close();
       } else {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         const blob = new Blob([texCode], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'flowchart.tex';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        if (isIOS) {
+          // iOS Safari は <a download> を無視するため新しいタブで開き
+          // シェアシート → "ファイルに保存" で保存できるよう案内する
+          window.open(url, '_blank');
+          alert('新しいタブが開きます。\n画面下の共有ボタン（□↑）から「ファイルに保存」を選んでください。');
+        } else {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'flowchart.tex';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
@@ -306,21 +314,52 @@ export default function App() {
     }
   };
 
+  const copyToClipboardFallback = (text: string) => {
+    // execCommand fallback for browsers without ClipboardItem support
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  };
+
   const handleShare = async () => {
     try {
+      // IDとURLはinsert前に確定させる
       const id = Math.random().toString(36).substring(2, 10);
-      const { error } = await supabase
-        .from('flows')
-        .insert([{
-          id,
-          data: { nodes, edges }
-        }]);
-
-      if (error) throw error;
-
       const shareUrl = `${window.location.origin}${window.location.pathname}?v=${id}`;
-      
-      navigator.clipboard.writeText(shareUrl);
+
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+        // iOS Safari 13.4+ / モダンブラウザ:
+        // clipboard.write() をユーザージェスチャー内で同期的に呼ぶことでコンテキストを保持。
+        // ClipboardItem に Promise を渡すと、resolve されるまでジェスチャーが有効なまま待機する。
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/plain': supabase
+              .from('flows')
+              .insert([{ id, data: { nodes, edges } }])
+              .then(({ error }) => {
+                if (error) throw error;
+                return new Blob([shareUrl], { type: 'text/plain' });
+              }),
+          }),
+        ]);
+      } else {
+        // フォールバック: insert後にexecCommandでコピー
+        const { error } = await supabase
+          .from('flows')
+          .insert([{ id, data: { nodes, edges } }]);
+        if (error) throw error;
+        copyToClipboardFallback(shareUrl);
+      }
+
       alert(`共有リンクを作成しました！クリップボードにコピーされました：\n${shareUrl}`);
     } catch (err: any) {
       console.error('Supabase Error:', err);
@@ -342,12 +381,12 @@ export default function App() {
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: '12px', 
-          padding: '8px 0',
-          marginBottom: '10px'
+          gap: isMobile ? '6px' : '12px', 
+          padding: isMobile ? '2px 0' : '8px 0',
+          marginBottom: isMobile ? '4px' : '10px'
         }}>
           <div style={{
-            fontSize: '1.65rem',
+            fontSize: isMobile ? '1.1rem' : '1.65rem',
             fontWeight: 800,
             letterSpacing: '-0.02em',
             background: 'linear-gradient(135deg, var(--accent-color), #8b5cf6)',
@@ -358,7 +397,7 @@ export default function App() {
             ChemFlow
           </div>
           <div style={{
-            fontSize: '1.65rem',
+            fontSize: isMobile ? '1.1rem' : '1.65rem',
             fontWeight: 600,
             color: 'var(--text-secondary)',
             opacity: 0.9
@@ -373,7 +412,7 @@ export default function App() {
             draggable
             onDragStart={(e) => e.dataTransfer.setData('application/reactflow', 'process')}
             onClick={addProcessNodeClicked}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', boxShadow: 'none' }}
           >
             ＋ プロセスを追加
           </div>
@@ -455,7 +494,6 @@ export default function App() {
                 cursor: 'pointer',
                 fontSize: '0.85rem',
                 flex: 1,
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
             >
               📘 使い方
@@ -471,7 +509,6 @@ export default function App() {
                 cursor: 'pointer',
                 fontSize: '0.85rem',
                 flex: 1,
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
             >
               📄 License
@@ -526,6 +563,7 @@ export default function App() {
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
+            preventScrolling={true}
           >
             <Controls />
             <Background color="#aaa" gap={10} />
@@ -540,7 +578,7 @@ export default function App() {
           className="sidebar-resizer" 
           onMouseDown={startResizing} 
           style={isMobile ? { 
-            position: 'absolute',
+            position: 'fixed',
             bottom: `${panelHeight}px`,
             left: 0,
             right: 0,
@@ -563,9 +601,11 @@ export default function App() {
 
       {/* Toggle Button - パネルの外に独立して配置（pointerEventsの影響を受けない） */}
       <div style={{
-        position: 'absolute',
+        position: isMobile ? 'fixed' : 'absolute',
         top: isMobile ? 'auto' : '50%',
-        bottom: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : 'auto',
+        bottom: isMobile
+          ? (showOutput ? `calc(${panelHeight}px)` : '0px')
+          : 'auto',
         right: isMobile ? 'auto' : (showOutput ? `${sideWidth}px` : '0px'),
         left: isMobile ? '50%' : 'auto',
         transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
@@ -583,9 +623,9 @@ export default function App() {
           aria-controls={outputPanelId}
           title={showOutput ? "閉じる" : "TeX出力を表示"}
           style={isMobile ? {
-            height: '28px', width: '60px', borderRadius: '8px 8px 0 0', borderBottom: 'none', pointerEvents: 'auto'
+            height: '36px', width: '60vw', borderRadius: '8px 8px 0 0', borderBottom: 'none', pointerEvents: 'auto'
           } : {
-            width: '28px', height: '65px', borderRadius: '8px 0 0 8px', borderRight: 'none', pointerEvents: 'auto'
+            width: '42px', height: '130px', borderRadius: '8px 0 0 8px', borderRight: 'none', pointerEvents: 'auto'
           }}
         >
           {isMobile ? (showOutput ? '▼' : '▲') : (showOutput ? '▶' : '◀')}
@@ -601,6 +641,7 @@ export default function App() {
           bottom: isMobile ? 0 : 'auto',
           top: isMobile ? 'auto' : 0,
           left: isMobile ? 0 : 'auto',
+          position: isMobile ? 'fixed' : 'absolute',
           height: isMobile ? (showOutput ? `${panelHeight}px` : '0px') : '100%',
           width: isMobile ? '100%' : (showOutput ? `${sideWidth}px` : '0px'),
           flexShrink: 0,

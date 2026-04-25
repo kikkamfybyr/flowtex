@@ -38,7 +38,7 @@ export const ProcessEdge = ({
   const nodes = useNodes();
   const edges = useEdges();
   const sourceNode = nodes.find(n => n.id === source);
-  const branchOffset = (sourceNode?.data as any)?.branchOffset ?? 30;
+  const branchOffset = (sourceNode?.data as any)?.branchOffset ?? 50;
   const { sourceCounts, targetCounts } = getEdgeDegreeCounts(
     edges as Array<{ source: string; target: string }>
   );
@@ -300,8 +300,9 @@ export const ProcessEdge = ({
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${sourceX}px,${branchMidY}px)`,
               pointerEvents: 'all',
-              width: '14px',
-              height: '14px',
+              touchAction: 'none', /* Androidでのドラッグ中のページスクロールを防ぐ */
+              width: '20px',
+              height: '20px',
               backgroundColor: 'var(--accent-color)',
               borderRadius: '50%',
               cursor: 'grab',
@@ -311,6 +312,7 @@ export const ProcessEdge = ({
               opacity: 0.9,
               transition: 'transform 0.1s ease, box-shadow 0.1s ease',
             }}
+            className="nodrag nopan"
             onPointerDown={handleBranchDrag}
             onMouseEnter={(e) => (e.currentTarget.style.transform = 'translate(-50%, -50%) translate(' + sourceX + 'px,' + branchMidY + 'px) scale(1.2)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'translate(-50%, -50%) translate(' + sourceX + 'px,' + branchMidY + 'px) scale(1)')}
