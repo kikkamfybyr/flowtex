@@ -306,6 +306,27 @@ export default function App() {
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    // navigator.clipboard は非同期APIのためiOS Safariではジェスチャーコンテキストが
+    // 失われた後に呼ぶとNotAllowedErrorになる。execCommandはジェスチャー不要で動作する。
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.top = '0';
+      ta.style.left = '0';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch {
+      // execCommandが使えない環境ではClipboard APIにフォールバック
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+  };
+
   const handleShare = async () => {
     try {
       const id = Math.random().toString(36).substring(2, 10);
@@ -320,7 +341,7 @@ export default function App() {
 
       const shareUrl = `${window.location.origin}${window.location.pathname}?v=${id}`;
       
-      navigator.clipboard.writeText(shareUrl);
+      copyToClipboard(shareUrl);
       alert(`共有リンクを作成しました！クリップボードにコピーされました：\n${shareUrl}`);
     } catch (err: any) {
       console.error('Supabase Error:', err);
