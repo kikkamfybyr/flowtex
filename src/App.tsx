@@ -306,42 +306,52 @@ export default function App() {
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    // navigator.clipboard は非同期APIのためiOS Safariではジェスチャーコンテキストが
-    // 失われた後に呼ぶとNotAllowedErrorになる。execCommandはジェスチャー不要で動作する。
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.top = '0';
-      ta.style.left = '0';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    } catch {
-      // execCommandが使えない環境ではClipboard APIにフォールバック
-      navigator.clipboard.writeText(text).catch(() => {});
-    }
+  const copyToClipboardFallback = (text: string) => {
+    // execCommand fallback for browsers without ClipboardItem support
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    document.execCommand('copy');
+    document.body.removeChild(ta);
   };
 
   const handleShare = async () => {
     try {
+      // IDとURLはinsert前に確定させる
       const id = Math.random().toString(36).substring(2, 10);
-      const { error } = await supabase
-        .from('flows')
-        .insert([{
-          id,
-          data: { nodes, edges }
-        }]);
-
-      if (error) throw error;
-
       const shareUrl = `${window.location.origin}${window.location.pathname}?v=${id}`;
-      
-      copyToClipboard(shareUrl);
+
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+        // iOS Safari 13.4+ / モダンブラウザ:
+        // clipboard.write() をユーザージェスチャー内で同期的に呼ぶことでコンテキストを保持。
+        // ClipboardItem に Promise を渡すと、resolve されるまでジェスチャーが有効なまま待機する。
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/plain': supabase
+              .from('flows')
+              .insert([{ id, data: { nodes, edges } }])
+              .then(({ error }) => {
+                if (error) throw error;
+                return new Blob([shareUrl], { type: 'text/plain' });
+              }),
+          }),
+        ]);
+      } else {
+        // フォールバック: insert後にexecCommandでコピー
+        const { error } = await supabase
+          .from('flows')
+          .insert([{ id, data: { nodes, edges } }]);
+        if (error) throw error;
+        copyToClipboardFallback(shareUrl);
+      }
+
       alert(`共有リンクを作成しました！クリップボードにコピーされました：\n${shareUrl}`);
     } catch (err: any) {
       console.error('Supabase Error:', err);
