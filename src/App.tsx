@@ -288,7 +288,8 @@ export default function App() {
         await writable.write(texCode);
         await writable.close();
       } else {
-        const blob = new Blob([texCode], { type: 'text/plain' });
+        // type を octet-stream にすることで Safari がブラウザで開かず強制ダウンロードする
+        const blob = new Blob([texCode], { type: 'application/octet-stream' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
