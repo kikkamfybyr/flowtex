@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, useEdges } from '@xyflow/react';
 import { PreviewTex } from '../PreviewTex';
 
@@ -8,30 +8,53 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
   const [isEditing, setIsEditing] = useState(false);
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
   const { setNodes, setEdges, getNode } = useReactFlow();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Long-press selection for mobile touch devices
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchMoved = useRef(false);
+  const touchStartPos = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    return () => { if (longPressTimer.current) clearTimeout(longPressTimer.current); };
+  }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchMoved.current = false;
+    touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    longPressTimer.current = setTimeout(() => {
+      if (!touchMoved.current) {
+        if (navigator.vibrate) navigator.vibrate(30);
+        setNodes(nds => nds.map(n => n.id === id ? { ...n, selected: !n.selected } : n));
+      }
+    }, 500);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (longPressTimer.current !== null) {
+      const dx = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
+      const dy = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
+      if (dx > 8 || dy > 8) {
+        touchMoved.current = true;
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current !== null) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
   
   const allEdges = useEdges();
   const outgoingEdges = allEdges.filter(e => e.source === id);
   const hasAnyChildren = outgoingEdges.length > 0;
 
-  // Auto-resize textarea to fit content
-  const autoResize = useCallback(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
-  }, []);
-
-  useEffect(() => {
-    if (isEditing) {
-      autoResize();
-    }
-  }, [isEditing, data.text, autoResize]);
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newText = e.target.value;
     setNodes((nds) => nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, text: newText } } : n)));
-    autoResize();
   };
 
   const handleDelete = () => {
@@ -150,22 +173,6 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
 
   // Unused handleBranchReagentAdd removed
 
-  const handleBranchReagentAdd = () => {
-    setNodes(nds => nds.map(n => {
-      if (n.id === id) {
-        const current = (n.data.branchReagents as any[]) || [];
-        return {
-          ...n,
-          data: {
-            ...n.data,
-            branchReagents: [...current, { id: crypto.randomUUID(), text: '分岐前試薬' }]
-          }
-        };
-      }
-      return n;
-    }));
-  };
-
   const handleBranchReagentChange = (reagentId: string, text: string) => {
     setNodes(nds => nds.map(n => {
       if (n.id === id) {
@@ -273,7 +280,11 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
   const branchReagents = (data.branchReagents as any[]) || [];
 
   return (
-    <div className={`chem-node node-process ${selected ? 'selected' : ''}`} style={{ position: 'relative' }}>
+    <div className={`chem-node node-process ${selected ? 'selected' : ''}`} style={{ position: 'relative' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <button className="delete-btn" onClick={handleDelete} title="プロセス削除">×</button>
       <Handle id="top" type="target" position={Position.Top} />
       
@@ -284,19 +295,14 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
             <span style={{ visibility: 'hidden', gridArea: '1 / 1', whiteSpace: 'pre', padding: '0 4px', fontSize: 'inherit' }}>
               {(data.text as string) || 'プロセス'}
             </span>
-            <textarea
-              ref={textareaRef}
-              autoFocus
-              rows={1}
-              className="inline-textarea nodrag"
+            <input 
+              autoFocus 
+              className="inline-input nodrag" 
               style={{ gridArea: '1 / 1', width: '100%', minWidth: '100%' }}
-              value={data.text as string}
-              onChange={handleTextChange}
+              value={data.text as string} 
+              onChange={handleTextChange} 
               onBlur={() => setIsEditing(false)}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') { e.preventDefault(); setIsEditing(false); }
-                // Enter without Shift inserts newline (default textarea behaviour)
-              }}
+              onKeyDown={(e) => { if (e.key === 'Enter') setIsEditing(false); }}
               onFocus={(e) => { if (isDefaultText(e.target.value)) e.target.select(); }}
             />
           </div>
@@ -334,12 +340,11 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
           <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
             <button className="add-tool-btn" onClick={handleInsertNode} title="間にプロセスを割り込ませる">↓間に挿入</button>
             <button className="add-tool-btn" onClick={handleAddExtraBranch} title="新しい枝を1つ増やす">＋枝を追加</button>
-            <button className="add-tool-btn" onClick={handleBranchReagentAdd} title="分岐前に試薬を追加">＋分岐前試薬</button>
           </div>
 
           {branchReagents.length > 0 && (
             <div style={{ width: '100% '}}>
-              <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '4px' }}>↓分岐前に追加</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '4px' }}>↓分岐前に追加（既存データのみ表示）</div>
               {branchReagents.map((r: any) => (
                 <div key={r.id} className="inline-reagent">
                   <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center' }}>

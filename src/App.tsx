@@ -248,36 +248,6 @@ export default function App() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  // タッチデバイス（指での操作）かどうかを判定するためのRef
-  const isTouchRef = useRef(false);
-
-  useEffect(() => {
-    const handleTouchStart = () => { isTouchRef.current = true; };
-    const handleMouseMove = () => { isTouchRef.current = false; };
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
-
-  // 長押し（スマホ・タブレット）で複数選択（トグル）※PCの右クリックは無視
-  const onNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: any) => {
-      // 画面幅ではなく、「直近の操作がタッチ操作だったか」で判定する
-      if (!isTouchRef.current) return; 
-      
-      event.preventDefault(); // デフォルトのコンテキストメニューを防止
-      
-      // クリックしたノードの選択状態だけを反転し、他のノードは維持する（複数選択）
-      setNodes((nds) =>
-        nds.map((n) => (n.id === node.id ? { ...n, selected: !n.selected } : n))
-      );
-    },
-    [setNodes]
-  );
-
   const texCode = generateTexCode(nodes as any, edges as any);
 
   const addProcessNodeClicked = () => {
@@ -550,7 +520,7 @@ export default function App() {
               <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '6px' }}>📘 使い方</div>
               <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>ノードの編集</span><br />
-                • ノードをクリックで編集（改行可）<br />
+                • ノードをクリックで編集<br />
                 • <code>↓追加</code> で連結、<code>⑂分岐</code> で分岐
               </div>
               <div style={{ marginBottom: '6px' }}>
@@ -594,7 +564,6 @@ export default function App() {
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
             preventScrolling={true}
-            onNodeContextMenu={onNodeContextMenu}
           >
             <Controls />
             <Background color="#aaa" gap={10} />
