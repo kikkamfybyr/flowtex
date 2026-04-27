@@ -260,7 +260,7 @@ body {
 }
 
 .chem-node.selected {
-  border-color: var(--accent-color);
+  border: 5px solid var(--accent-color);
 }
 
 .node-process {

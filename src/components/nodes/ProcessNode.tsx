@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, useEdges } from '@xyflow/react';
 import { PreviewTex } from '../PreviewTex';
 
@@ -9,43 +9,14 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
   const { setNodes, setEdges, getNode } = useReactFlow();
 
-  // Long-press selection for mobile touch devices
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const touchMoved = useRef(false);
-  const touchStartPos = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    return () => { if (longPressTimer.current) clearTimeout(longPressTimer.current); };
-  }, []);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchMoved.current = false;
-    touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    longPressTimer.current = setTimeout(() => {
-      if (!touchMoved.current) {
-        if (navigator.vibrate) navigator.vibrate(30);
-        setNodes(nds => nds.map(n => n.id === id ? { ...n, selected: !n.selected } : n));
-      }
-    }, 500);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (longPressTimer.current !== null) {
-      const dx = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
-      const dy = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
-      if (dx > 8 || dy > 8) {
-        touchMoved.current = true;
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (longPressTimer.current !== null) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
+  // Long-press selection via contextmenu event — works on both iOS Safari and Android Chrome.
+  // The browser fires contextmenu on long-press (mobile) and on right-click (desktop).
+  // We toggle selection and suppress the browser context menu in both cases.
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (navigator.vibrate) navigator.vibrate(30);
+    setNodes(nds => nds.map(n => n.id === id ? { ...n, selected: !n.selected } : n));
   };
   
   const allEdges = useEdges();
@@ -281,9 +252,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
 
   return (
     <div className={`chem-node node-process ${selected ? 'selected' : ''}`} style={{ position: 'relative' }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      onContextMenu={handleContextMenu}
     >
       <button className="delete-btn" onClick={handleDelete} title="プロセス削除">×</button>
       <Handle id="top" type="target" position={Position.Top} />
