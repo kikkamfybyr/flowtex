@@ -116,6 +116,7 @@ export const HelpPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           <div style={{ marginBottom: '16px' }}>
             <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>ノードの編集</span><br />
             • ノードをクリックするとテキストを編集できます。<br />
+            • <kbd style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid var(--panel-border)', borderRadius: 4, padding: '2px 6px', fontSize: '0.8rem' }}>Enter</kbd> で改行、<kbd style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid var(--panel-border)', borderRadius: 4, padding: '2px 6px', fontSize: '0.8rem' }}>Esc</kbd> または外側クリックで確定します。<br />
             • ノード下部の <code style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 3, padding: '2px 5px' }}>↓追加</code> で縦に新しく連結します。<br />
             • ノード下部の <code style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 3, padding: '2px 5px' }}>⑂分岐</code> で複数への分岐を作成します。
           </div>
@@ -123,7 +124,8 @@ export const HelpPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           <div style={{ marginBottom: '16px' }}>
             <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>試薬・条件の追加</span><br />
             • ノード側面の <code style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 3, padding: '2px 5px' }}>+試薬</code> で横付けの試薬パスを作成します。<br />
-            • 線の中央にある <code style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 3, padding: '2px 5px' }}>+</code> ボタンで、矢印の途中に試薬を追加します。
+            • 線の中央にある <code style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 3, padding: '2px 5px' }}>+</code> ボタンで、矢印の途中に試薬を追加します。<br />
+            • 分岐があるノードでは <code style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 3, padding: '2px 5px' }}>＋分岐前試薬</code> で分岐点より前に試薬を追加します。
           </div>
 
           <div style={{ marginBottom: '16px' }}>

@@ -550,7 +550,7 @@ export default function App() {
               <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '6px' }}>📘 使い方</div>
               <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>ノードの編集</span><br />
-                • ノードをクリックで編集<br />
+                • ノードをクリックで編集（改行可）<br />
                 • <code>↓追加</code> で連結、<code>⑂分岐</code> で分岐
               </div>
               <div style={{ marginBottom: '6px' }}>

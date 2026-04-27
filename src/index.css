@@ -376,6 +376,25 @@ body {
   box-sizing: border-box;
 }
 
+.inline-textarea {
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--accent-color);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  padding: var(--input-padding);
+  box-sizing: border-box;
+  resize: none;
+  overflow: hidden;
+  line-height: 1.5;
+  min-height: 1.5em;
+  display: block;
+}
+
 .node-input {
   width: 100%;
   margin-top: 8px;
@@ -509,6 +528,7 @@ body {
   margin: 0;
   line-height: 1.5;
   font-family: inherit;
+  font-size: inherit;
   letter-spacing: inherit;
   box-sizing: border-box;
 }
@@ -568,23 +588,7 @@ body {
   border-radius: 6px;
 }
 
-.reagent-input {
-  background: var(--bg-color);
-  border: 1px solid var(--panel-border);
-  color: var(--text-primary);
-  font-size: 11px;
-  flex-grow: 1;
-  width: 100%;
-  padding: 4px 0;
-  margin: 0;
-  line-height: 1.5;
-  font-family: inherit;
-  letter-spacing: inherit;
-}
-
 .reagent-input:focus {
-  border-color: var(--accent-color);
-  background: var(--panel-bg);
   outline: none;
 }
 

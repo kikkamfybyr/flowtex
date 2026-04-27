@@ -7,20 +7,34 @@ interface PreviewTexProps {
 }
 
 export const PreviewTex: React.FC<PreviewTexProps> = ({ text }) => {
-  // If the text contains TeX macros but no math delimiters, 
-  // we can heuristically wrap it in $$ to force KaTeX rendering for \ce{}
-  const hasTeXMacro = text.includes('\\ce{');
-  const displayString = hasTeXMacro && !text.includes('$') && !text.includes('\\(') 
-    ? `$${text}$` 
-    : text;
+  const lines = text.split('\n');
 
-  try {
-    return (
-      <div className="tex-preview">
-        <Latex>{displayString}</Latex>
-      </div>
-    );
-  } catch (e) {
-    return <div className="tex-preview-error">{text}</div>;
-  }
+  return (
+    <div className="tex-preview">
+      {lines.map((line, i) => {
+        // If the line contains TeX macros but no math delimiters,
+        // wrap in $ to force KaTeX rendering for \ce{}
+        const hasTeXMacro = line.includes('\\ce{');
+        const displayString = hasTeXMacro && !line.includes('$') && !line.includes('\\(')
+          ? `$${line}$`
+          : line;
+
+        try {
+          return (
+            <React.Fragment key={i}>
+              {i > 0 && <br />}
+              <span className="tex-preview-line"><Latex>{displayString}</Latex></span>
+            </React.Fragment>
+          );
+        } catch (e) {
+          return (
+            <React.Fragment key={i}>
+              {i > 0 && <br />}
+              <span className="tex-preview-line tex-preview-error">{line}</span>
+            </React.Fragment>
+          );
+        }
+      })}
+    </div>
+  );
 };
