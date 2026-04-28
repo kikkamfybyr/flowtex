@@ -1,27 +1,115 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, useEdges, useStoreApi } from '@xyflow/react';
 import { PreviewTex } from '../PreviewTex';
 
 const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物質|挿入された工程|追加された枝|横追加|分岐 \d+)$/.test(t);
+
+// 長押し検出の閾値（ミリ秒）
+const LONG_PRESS_DURATION = 400;
+// 長押し中に指が動いた場合のキャンセル距離（ピクセル）
+const LONG_PRESS_MOVE_THRESHOLD = 10;
 
 export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
   const { setNodes, setEdges, getNode } = useReactFlow();
   const store = useStoreApi();
+  const nodeRef = useRef<HTMLDivElement>(null);
+  // 長押しタイマーと初期タッチ位置を保持
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+  // 長押しが成立したかどうか（後続のclickイベントを抑制するため）
+  const longPressTriggered = useRef(false);
 
-  // Long-press multi-select via contextmenu event (iOS Safari long-press / Android Chrome
-  // long-press / desktop right-click).  We do NOT touch setNodes here because React 18
-  // flushes the state update as a microtask; the subsequent `click` (fired when the finger
-  // lifts, which is a new macrotask) would then see nodeLookup.selected === true together
-  // with multiSelectionActive === true and call unselectNodesAndEdges — undoing the change.
-  // Instead we only flip the store flag and let React Flow's own click handler append the
-  // node to the selection via addSelectedNodes (which is no-op-safe in append mode).
+  // 長押しタイマーをクリアするヘルパー
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    touchStartPos.current = null;
+  }, []);
+
+  // touchstart: 長押しタイマーを開始
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    // マルチタッチの場合はキャンセル
+    if (e.touches.length > 1) {
+      cancelLongPress();
+      return;
+    }
+    longPressTriggered.current = false;
+    const touch = e.touches[0];
+    touchStartPos.current = { x: touch.clientX, y: touch.clientY };
+
+    longPressTimer.current = setTimeout(() => {
+      longPressTimer.current = null;
+      longPressTriggered.current = true;
+      // バイブレーションフィードバック
+      if (navigator.vibrate) navigator.vibrate(30);
+
+      // multiSelectionActive をセットし、現在のノードを選択に追加
+      // addSelectedNodes は multiSelectionActive===true の場合、既存選択を保持して追加する
+      const { addSelectedNodes } = store.getState();
+      store.setState({ multiSelectionActive: true });
+      addSelectedNodes([id]);
+    }, LONG_PRESS_DURATION);
+  }, [id, store, cancelLongPress]);
+
+  // touchmove: 指が大きく動いたらキャンセル
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!touchStartPos.current || !longPressTimer.current) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartPos.current.x;
+    const dy = touch.clientY - touchStartPos.current.y;
+    if (Math.sqrt(dx * dx + dy * dy) > LONG_PRESS_MOVE_THRESHOLD) {
+      cancelLongPress();
+    }
+  }, [cancelLongPress]);
+
+  // touchend / touchcancel: タイマーをクリア
+  const handleTouchEnd = useCallback(() => {
+    cancelLongPress();
+  }, [cancelLongPress]);
+
+  // 長押し成立後の click イベントを抑制する
+  // （iOS Safariは長押し→指を離す→clickの順で発火するため）
+  const handleClickCapture = useCallback((e: MouseEvent) => {
+    if (longPressTriggered.current) {
+      e.stopPropagation();
+      e.preventDefault();
+      longPressTriggered.current = false;
+    }
+  }, []);
+
+  // DOM要素にタッチイベントハンドラをアタッチ
+  // Reactの合成イベントではなくネイティブイベントを使用（{ passive: false }で確実にpreventDefault可能）
+  useEffect(() => {
+    const el = nodeRef.current;
+    if (!el) return;
+    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+    el.addEventListener('touchmove', handleTouchMove, { passive: true });
+    el.addEventListener('touchend', handleTouchEnd, { passive: true });
+    el.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    el.addEventListener('click', handleClickCapture, true); // capturing phase
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove', handleTouchMove);
+      el.removeEventListener('touchend', handleTouchEnd);
+      el.removeEventListener('touchcancel', handleTouchEnd);
+      el.removeEventListener('click', handleClickCapture, true);
+      cancelLongPress();
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd, handleClickCapture, cancelLongPress]);
+
+  // contextmenu: デスクトップ右クリック & Android Chrome長押し用（従来のフォールバック）
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (navigator.vibrate) navigator.vibrate(30);
     store.setState({ multiSelectionActive: true });
+    // Android Chrome等ではcontextmenuが確実に発火するため、ここでも選択追加
+    const { addSelectedNodes } = store.getState();
+    addSelectedNodes([id]);
   };
   
   const allEdges = useEdges();
@@ -256,7 +344,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
   const branchReagents = (data.branchReagents as any[]) || [];
 
   return (
-    <div className={`chem-node node-process ${selected ? 'selected' : ''}`} style={{ position: 'relative' }}
+    <div ref={nodeRef} className={`chem-node node-process ${selected ? 'selected' : ''}`} style={{ position: 'relative' }}
       onContextMenu={handleContextMenu}
     >
       <button className="delete-btn" onClick={handleDelete} title="プロセス削除">×</button>

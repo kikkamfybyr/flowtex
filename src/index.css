@@ -293,6 +293,10 @@ body {
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
   overflow: visible;
+  /* iOS Safari: 長押し時のシステムコンテキストメニュー（テキスト選択・コールアウト）を無効化 */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .chem-node:hover {
