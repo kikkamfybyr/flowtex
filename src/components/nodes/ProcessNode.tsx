@@ -10,17 +10,18 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
   const { setNodes, setEdges, getNode } = useReactFlow();
   const store = useStoreApi();
 
-  // Long-press selection via contextmenu event — works on both iOS Safari and Android Chrome.
-  // The browser fires contextmenu on long-press (mobile) and on right-click (desktop).
-  // We toggle selection and suppress the browser context menu in both cases.
-  // Setting multiSelectionActive: true in the React Flow store ensures that subsequent
-  // node taps append to the selection instead of replacing it (iOS has no modifier keys).
+  // Long-press multi-select via contextmenu event (iOS Safari long-press / Android Chrome
+  // long-press / desktop right-click).  We do NOT touch setNodes here because React 18
+  // flushes the state update as a microtask; the subsequent `click` (fired when the finger
+  // lifts, which is a new macrotask) would then see nodeLookup.selected === true together
+  // with multiSelectionActive === true and call unselectNodesAndEdges — undoing the change.
+  // Instead we only flip the store flag and let React Flow's own click handler append the
+  // node to the selection via addSelectedNodes (which is no-op-safe in append mode).
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (navigator.vibrate) navigator.vibrate(30);
     store.setState({ multiSelectionActive: true });
-    setNodes(nds => nds.map(n => n.id === id ? { ...n, selected: !n.selected } : n));
   };
   
   const allEdges = useEdges();
