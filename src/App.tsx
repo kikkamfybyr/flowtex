@@ -563,6 +563,7 @@ export default function App() {
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
+            connectOnClick={true}
             preventScrolling={true}
           >
             <Controls />

@@ -57,6 +57,11 @@ export const ProcessEdge = ({
     data?.isLoop ? 'right' : null;
   const reagents = (data?.reagents as any[]) || [];
   const markerId = `arrowhead-${id}`;
+  // Safari resolves url(#id) relative to the base URL of the document, but fails when
+  // the SVG defs are in a nested <svg> element.  Using the absolute page URL as a
+  // prefix forces all browsers to look up the marker in the current document.
+  const baseUrl = typeof window !== 'undefined' ? window.location.href.replace(/#.*$/, '') : '';
+  const markerUrl = `url(${baseUrl}#${markerId})`;
 
   // X座標の差
   const dx = Math.abs(sourceX - targetX);
@@ -268,7 +273,7 @@ export const ProcessEdge = ({
       <BaseEdge
         path={edgePath}
         style={{ ...style, strokeWidth: 2, stroke: 'var(--edge-color)' }}
-        markerEnd={`url(#${markerId})`}
+        markerEnd={markerUrl}
       />
 
       <EdgeLabelRenderer>
