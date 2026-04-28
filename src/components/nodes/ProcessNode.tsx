@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Handle, Position, NodeProps, useReactFlow, useEdges } from '@xyflow/react';
+import { Handle, Position, NodeProps, useReactFlow, useEdges, useStoreApi } from '@xyflow/react';
 import { PreviewTex } from '../PreviewTex';
 
 const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物質|挿入された工程|追加された枝|横追加|分岐 \d+)$/.test(t);
@@ -8,14 +8,18 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
   const [isEditing, setIsEditing] = useState(false);
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
   const { setNodes, setEdges, getNode } = useReactFlow();
+  const store = useStoreApi();
 
   // Long-press selection via contextmenu event — works on both iOS Safari and Android Chrome.
   // The browser fires contextmenu on long-press (mobile) and on right-click (desktop).
   // We toggle selection and suppress the browser context menu in both cases.
+  // Setting multiSelectionActive: true in the React Flow store ensures that subsequent
+  // node taps append to the selection instead of replacing it (iOS has no modifier keys).
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (navigator.vibrate) navigator.vibrate(30);
+    store.setState({ multiSelectionActive: true });
     setNodes(nds => nds.map(n => n.id === id ? { ...n, selected: !n.selected } : n));
   };
   

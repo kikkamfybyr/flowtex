@@ -9,6 +9,7 @@ import {
   Background,
   Connection,
   SelectionMode,
+  useStoreApi,
 } from '@xyflow/react';
 import type { OnNodeDrag } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -19,6 +20,15 @@ import { generateTexCode } from './lib/texGenerator';
 import { supabase } from './lib/supabase';
 import { LicensePage } from './components/LicensePage';
 import { HelpPage } from './components/HelpPage';
+
+// Helper rendered inside ReactFlow that exposes the internal store via a ref.
+// This allows App (which is outside the ReactFlowProvider context) to call
+// store.setState() to reset multiSelectionActive when the pane is tapped.
+function StoreRefSetter({ storeRef }: { storeRef: React.MutableRefObject<ReturnType<typeof useStoreApi> | null> }) {
+  const store = useStoreApi();
+  useEffect(() => { storeRef.current = store; }, [store, storeRef]);
+  return null;
+}
 
 const nodeTypes = { process: ProcessNode };
 const edgeTypes = { process_edge: ProcessEdge };
@@ -43,6 +53,8 @@ export default function App() {
   const [sideWidth, setSideWidth] = useState(450);
   const [showOutput, setShowOutput] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+  // Ref to the React Flow internal store, set by StoreRefSetter rendered inside ReactFlow.
+  const storeRef = useRef<ReturnType<typeof useStoreApi> | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 900);
@@ -246,6 +258,14 @@ export default function App() {
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  // Reset iOS multi-select mode when the user taps the background pane.
+  // multiSelectionActive is set to true by ProcessNode's long-press handler so that
+  // subsequent node taps append to the selection. Here we clear it so the next
+  // lone tap on a node starts fresh with only that node selected.
+  const handlePaneClick = useCallback(() => {
+    storeRef.current?.setState({ multiSelectionActive: false });
   }, []);
 
   const texCode = generateTexCode(nodes as any, edges as any);
@@ -552,6 +572,7 @@ export default function App() {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onNodeDragStop={onNodeDragStop}
+            onPaneClick={handlePaneClick}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             defaultEdgeOptions={{ type: 'process_edge' }}
@@ -566,6 +587,7 @@ export default function App() {
             connectOnClick={true}
             preventScrolling={true}
           >
+            <StoreRefSetter storeRef={storeRef} />
             <Controls />
             <Background color="#aaa" gap={10} />
           </ReactFlow>
