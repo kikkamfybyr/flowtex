@@ -217,22 +217,48 @@ body {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.react-flow__handle:hover {
-  transform: scale(1.8);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+/* React Flow が各方向に translate(X,Y) を付与するため、
+   scale だけ上書きすると位置がずれる。
+   各方向ごとに translate を保持したまま scale を追加する。 */
+.react-flow__handle-bottom:hover,
+.react-flow__handle-bottom.react-flow__handle-connecting {
+  transform: translate(-50%, 50%) scale(1.3);
+}
+.react-flow__handle-top:hover,
+.react-flow__handle-top.react-flow__handle-connecting {
+  transform: translate(-50%, -50%) scale(1.3);
+}
+.react-flow__handle-left:hover,
+.react-flow__handle-left.react-flow__handle-connecting {
+  transform: translate(-50%, -50%) scale(1.3);
+}
+.react-flow__handle-right:hover,
+.react-flow__handle-right.react-flow__handle-connecting {
+  transform: translate(50%, -50%) scale(1.3);
 }
 
-/* 接続ドラッグ中（ソース側） */
+.react-flow__handle:hover,
 .react-flow__handle-connecting {
-  transform: scale(2);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.40);
 }
 
 /* 有効なドロップターゲット（ターゲット側） */
+.react-flow__handle-bottom.react-flow__handle-valid {
+  transform: translate(-50%, 50%) scale(1.3);
+}
+.react-flow__handle-top.react-flow__handle-valid {
+  transform: translate(-50%, -50%) scale(1.3);
+}
+.react-flow__handle-left.react-flow__handle-valid {
+  transform: translate(-50%, -50%) scale(1.3);
+}
+.react-flow__handle-right.react-flow__handle-valid {
+  transform: translate(50%, -50%) scale(1.3);
+}
+
 .react-flow__handle-valid {
   background: #22c55e;
-  transform: scale(2);
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.45);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.45);
 }
 
 /* React Flow Controls - ダークモード対応 */
