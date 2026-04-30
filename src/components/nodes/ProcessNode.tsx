@@ -32,6 +32,13 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
 
   // touchstart: 長押しタイマーを開始
   const handleTouchStart = useCallback((e: TouchEvent) => {
+    // 既に選択されているノードをタッチした場合は、複数ドラッグの開始の可能性が高い。
+    // multiSelectionActiveがtrueのままだと、React Flowがドラッグ開始時にこのノードの選択を解除してしまうため、
+    // ここで一時的にfalseにする。これにより、選択状態を維持したまま複数ノードを一緒にドラッグできる。
+    if (selected) {
+      store.setState({ multiSelectionActive: false });
+    }
+
     // マルチタッチの場合はキャンセル
     if (e.touches.length > 1) {
       cancelLongPress();
@@ -48,12 +55,39 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       if (navigator.vibrate) navigator.vibrate(30);
 
       // multiSelectionActive をセットし、現在のノードを選択に追加
-      // addSelectedNodes は multiSelectionActive===true の場合、既存選択を保持して追加する
       const { addSelectedNodes } = store.getState();
       store.setState({ multiSelectionActive: true });
       addSelectedNodes([id]);
     }, LONG_PRESS_DURATION);
-  }, [id, store, cancelLongPress]);
+  }, [id, store, cancelLongPress, selected]);
+
+  // Handle用のtouchendハンドラ: iOS Safariでのクリック-接続バグを回避
+  const handleHandleTouchEnd = useCallback((e: React.TouchEvent, handleType: 'source' | 'target', handleId: string) => {
+    const state = store.getState();
+    const startHandle = state.connectionClickStartHandle;
+    
+    // 既に別のハンドルがクリックされて接続待機状態である場合
+    if (startHandle && (startHandle.nodeId !== id || startHandle.id !== handleId)) {
+      if (startHandle.type !== handleType) {
+        e.preventDefault(); // Safariで後続のclickイベントが発火するのを防止（二重処理や選択解除を防ぐ）
+        e.stopPropagation();
+        
+        const connection = {
+          source: startHandle.type === 'source' ? startHandle.nodeId : id,
+          sourceHandle: (startHandle.type === 'source' ? startHandle.id : handleId) || null,
+          target: startHandle.type === 'target' ? startHandle.nodeId : id,
+          targetHandle: (startHandle.type === 'target' ? startHandle.id : handleId) || null,
+        };
+        
+        // React FlowのonConnectを手動で呼び出し
+        if (state.onConnect) {
+          state.onConnect(connection);
+        }
+        // 接続待機状態をクリア
+        store.setState({ connectionClickStartHandle: null });
+      }
+    }
+  }, [id, store]);
 
   // touchmove: 指が大きく動いたらキャンセル
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -348,7 +382,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       onContextMenu={handleContextMenu}
     >
       <button className="delete-btn" onClick={handleDelete} title="プロセス削除">×</button>
-      <Handle id="top" type="target" position={Position.Top} />
+      <Handle id="top" type="target" position={Position.Top} onTouchEnd={(e) => handleHandleTouchEnd(e, 'target', 'top')} />
       
       <div onClick={() => setIsEditing(true)}>
         {isEditing ? (
@@ -449,7 +483,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
         </div>
       )}
 
-      <Handle id="bottom" type="source" position={Position.Bottom} />
+      <Handle id="bottom" type="source" position={Position.Bottom} onTouchEnd={(e) => handleHandleTouchEnd(e, 'source', 'bottom')} />
     </div>
   );
 };
