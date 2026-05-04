@@ -266,10 +266,39 @@ export default function App() {
             e.source === params.source ? { ...e, data: { ...e.data, isBranch: true } } : e
           );
         }
+
+        // 合流（同じターゲットに複数エッジが入る）時: ベンドポイントのY座標を揃える
+        // 非ブランチの合流エッジを対象に、最も低い（Y値最大の）ベンドYに統一する
+        const mergeEdges = result.filter(e => e.target === params.target && !(e.data?.isBranch));
+        if (mergeEdges.length > 1) {
+          const getSourceHandleY = (sourceId: string) => {
+            const srcNode = nodes.find(n => n.id === sourceId);
+            if (!srcNode) return null;
+            const h = (srcNode as any).measured?.height ?? (srcNode as any).height ?? 80;
+            return (srcNode.position.y as number) + h;
+          };
+          const bendYs = mergeEdges.map(e => {
+            const hy = getSourceHandleY(e.source);
+            if (hy === null) return null;
+            return hy + ((e.data?.mergeOffset as number) ?? 50);
+          });
+          if (bendYs.every(y => y !== null)) {
+            const alignedBendY = Math.max(...(bendYs as number[]));
+            result = result.map(e => {
+              if (e.target === params.target && !(e.data?.isBranch)) {
+                const hy = getSourceHandleY(e.source);
+                if (hy === null) return e;
+                return { ...e, data: { ...e.data, mergeOffset: Math.max(20, alignedBendY - hy) } };
+              }
+              return e;
+            });
+          }
+        }
+
         return result;
       });
     },
-    [setEdges, takeSnapshot]
+    [setEdges, nodes, takeSnapshot]
   );
 
   const onDrop = useCallback(

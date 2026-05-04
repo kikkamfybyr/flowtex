@@ -117,6 +117,14 @@ export const ProcessEdge = ({
     edgePath = loopPath;
     midX = loopX;
     midY = (sourceY + targetY) / 2;
+  } else if (isActualMerge) {
+    // 合流時: ベンドポイントのY座標を揃えるためにZ字パスを使用
+    // mergeOffset は onConnect 時に揃えて edge.data に格納される
+    const mergeOffset = (data?.mergeOffset as number) ?? 50;
+    const mergeMidY = sourceY + mergeOffset;
+    edgePath = `M ${sourceX},${sourceY} L ${sourceX},${mergeMidY} L ${targetX},${mergeMidY} L ${targetX},${targetY}`;
+    midX = targetX;
+    midY = (mergeMidY + targetY) / 2;
   } else if (dx < 5) {
     edgePath = verticalPath;
     midX = sourceX;
