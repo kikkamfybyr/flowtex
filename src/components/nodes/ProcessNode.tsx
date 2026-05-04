@@ -47,8 +47,18 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     // （リセットすると、選択済みノードのハンドルをタップしたとき接続ドラッグのプレビュー線が
     //   cancelConnection() の後も再描画されて残ってしまう原因になる）
     const isHandleTouch = (e.target as Element)?.closest('.react-flow__handle') !== null;
-    if (selected && !isHandleTouch) {
-      store.setState({ multiSelectionActive: false });
+    if (!isHandleTouch) {
+      if (selected) {
+        store.setState({ multiSelectionActive: false });
+      }
+      // ハンドルでなくノード本体をタッチした場合、保留中の接続（connectionClickStartHandle）をキャンセルする。
+      // ハンドルをタップして接続開始状態になった後に別ノードの本体をタップすると灰色のプレビュー線が
+      // 残ってしまうバグを防ぐ。
+      const state = store.getState();
+      if (state.connectionClickStartHandle) {
+        state.cancelConnection();
+        store.setState({ connectionClickStartHandle: null });
+      }
     }
     longPressTriggered.current = false;
     const touch = e.touches[0];
