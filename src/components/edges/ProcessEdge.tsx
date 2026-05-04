@@ -127,8 +127,8 @@ export const ProcessEdge = ({
     midY = labelY;
   }
 
-  // 合流（isActualMerge）の場合、×ボタンがターゲットノードに被らないようにmidYを上方にクランプ
-  const EDGE_BUTTON_MARGIN = 36;
+  // 合流（isActualMerge）の場合、×ボタンがターゲットノードや合流前+ボタンに被らないようにmidYを上方にクランプ
+  const EDGE_BUTTON_MARGIN = 50;
   if (isActualMerge) {
     midY = Math.min(midY, targetY - EDGE_BUTTON_MARGIN);
   }
@@ -284,10 +284,11 @@ export const ProcessEdge = ({
 
       <EdgeLabelRenderer>
         {/* 合流前の操作（＋ボタン） - 合流時のみ表示 */}
+        {/* sourceX を使うことで、同じ合流先に複数のエッジが入るとき各エッジのボタンが重ならない */}
         <div
           style={{
             position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${targetX}px,${targetY - 25}px)`,
+            transform: `translate(-50%, -50%) translate(${sourceX}px,${targetY - 25}px)`,
             pointerEvents: 'all',
             display: isActualMerge ? 'flex' : 'none',
             alignItems: 'center',
