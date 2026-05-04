@@ -114,6 +114,8 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       };
       if (state.onConnect) {
         state.onConnect(connection);
+        // onConnect後も灰色のプレビュー線が残ることがあるため、明示的にキャンセルして即座に消す
+        state.cancelConnection();
       }
     }
     store.setState({ connectionClickStartHandle: null });

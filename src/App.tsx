@@ -274,7 +274,16 @@ export default function App() {
   // subsequent node taps append to the selection. Here we clear it so the next
   // lone tap on a node starts fresh with only that node selected.
   const handlePaneClick = useCallback(() => {
-    storeRef.current?.setState({ multiSelectionActive: false });
+    const store = storeRef.current;
+    if (!store) return;
+    store.setState({ multiSelectionActive: false });
+    // ハンドルをタップして接続待ち状態のときにキャンバスの空白部分をタップした場合、
+    // connectionClickStartHandle が残ったままになり灰色の下書き線が表示され続けるため、ここでキャンセルする。
+    const state = store.getState();
+    if (state.connectionClickStartHandle) {
+      state.cancelConnection();
+      store.setState({ connectionClickStartHandle: null });
+    }
   }, []);
 
   const texCode = generateTexCode(nodes as any, edges as any);
