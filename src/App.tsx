@@ -62,6 +62,39 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // キャンバスの空白部分（パン領域）をタッチで終わったとき、接続待ち状態をキャンセルする。
+  // onPaneClick（clickイベント）は Safari で指が少しでも動くと発火しないため、
+  // native touchend リスナーをラッパー要素に直接追加して確実にキャンセルする。
+  useEffect(() => {
+    const el = reactFlowWrapper.current;
+    if (!el) return;
+    const handleWrapperTouchEnd = (e: TouchEvent) => {
+      const target = e.target as Element;
+      // ノード・ハンドル・エッジ・エッジラベル・コントロール上でのタッチは除外する
+      if (
+        target.closest('.react-flow__node') ||
+        target.closest('.react-flow__handle') ||
+        target.closest('.react-flow__edge') ||
+        target.closest('.react-flow__edgelabel-renderer') ||
+        target.closest('.react-flow__controls') ||
+        target.closest('.react-flow__minimap')
+      ) {
+        return;
+      }
+      // キャンバス空白部分のタッチ終了: 接続待ち状態をキャンセル
+      const store = storeRef.current;
+      if (!store) return;
+      store.setState({ multiSelectionActive: false });
+      const state = store.getState();
+      if (state.connectionClickStartHandle) {
+        state.cancelConnection();
+        store.setState({ connectionClickStartHandle: null });
+      }
+    };
+    el.addEventListener('touchend', handleWrapperTouchEnd);
+    return () => el.removeEventListener('touchend', handleWrapperTouchEnd);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // --- Resize Sidebar Logic ---
   const isResizing = useRef(false);
 

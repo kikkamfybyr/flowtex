@@ -40,25 +40,30 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       return;
     }
 
+    const isHandleTouch = (e.target as Element)?.closest('.react-flow__handle') !== null;
+    if (isHandleTouch) {
+      // ハンドルをタッチした際、React Flow の onTouchStart（XYHandle.onPointerDown）が
+      // 起動してドラッグ接続機構が始まると、微小な指の動きで connection.inProgress=true に
+      // なり灰色のプレビュー線が表示されてしまう。
+      // イベントのバブリングをここで止めることで React のイベントシステムに届かなくし、
+      // ドラッグ機構が起動しないようにする。接続処理は handleHandleTouchEnd で独自に行う。
+      e.stopPropagation();
+      return;
+    }
+
     // 既に選択されているノードをシングルタッチした場合は、複数ドラッグの開始の可能性が高い。
     // multiSelectionActiveがtrueのままだと、React Flowがドラッグ開始時にこのノードの選択を解除してしまうため、
     // ここで一時的にfalseにする。これにより、選択状態を維持したまま複数ノードを一緒にドラッグできる。
-    // ただし、ハンドル上のタッチは接続操作なので multiSelectionActive をリセットしない。
-    // （リセットすると、選択済みノードのハンドルをタップしたとき接続ドラッグのプレビュー線が
-    //   cancelConnection() の後も再描画されて残ってしまう原因になる）
-    const isHandleTouch = (e.target as Element)?.closest('.react-flow__handle') !== null;
-    if (!isHandleTouch) {
-      if (selected) {
-        store.setState({ multiSelectionActive: false });
-      }
-      // ハンドルでなくノード本体をタッチした場合、保留中の接続（connectionClickStartHandle）をキャンセルする。
-      // ハンドルをタップして接続開始状態になった後に別ノードの本体をタップすると灰色のプレビュー線が
-      // 残ってしまうバグを防ぐ。
-      const state = store.getState();
-      if (state.connectionClickStartHandle) {
-        state.cancelConnection();
-        store.setState({ connectionClickStartHandle: null });
-      }
+    if (selected) {
+      store.setState({ multiSelectionActive: false });
+    }
+    // ノード本体をタッチした場合、保留中の接続（connectionClickStartHandle）をキャンセルする。
+    // ハンドルをタップして接続開始状態になった後に別ノードの本体をタップすると灰色のプレビュー線が
+    // 残ってしまうバグを防ぐ。
+    const state = store.getState();
+    if (state.connectionClickStartHandle) {
+      state.cancelConnection();
+      store.setState({ connectionClickStartHandle: null });
     }
     longPressTriggered.current = false;
     const touch = e.touches[0];
@@ -82,9 +87,10 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
   // - 1回目のタップ: connectionClickStartHandleをセットしてclickを抑制
   // - 2回目のタップ: 互換ハンドルなら接続、同一ハンドルならキャンセル
   const handleHandleTouchEnd = useCallback((e: React.TouchEvent, handleType: 'source' | 'target', handleId: string) => {
-    // clickを必ず抑制して、React FlowのonClickが割り込まないようにする
+    // clickを必ず抑制して、React FlowのonClickが割り込まないようにする。
+    // stopPropagation は呼ばない: handleTouchStart でドラッグ機構を起動させないよう
+    // バブリングを止めているため、ここで残留リスナーを心配する必要がなくなった。
     e.preventDefault();
-    e.stopPropagation();
 
     const state = store.getState();
     const startHandle = state.connectionClickStartHandle;
