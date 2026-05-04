@@ -43,7 +43,11 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     // 既に選択されているノードをシングルタッチした場合は、複数ドラッグの開始の可能性が高い。
     // multiSelectionActiveがtrueのままだと、React Flowがドラッグ開始時にこのノードの選択を解除してしまうため、
     // ここで一時的にfalseにする。これにより、選択状態を維持したまま複数ノードを一緒にドラッグできる。
-    if (selected) {
+    // ただし、ハンドル上のタッチは接続操作なので multiSelectionActive をリセットしない。
+    // （リセットすると、選択済みノードのハンドルをタップしたとき接続ドラッグのプレビュー線が
+    //   cancelConnection() の後も再描画されて残ってしまう原因になる）
+    const isHandleTouch = (e.target as Element)?.closest('.react-flow__handle') !== null;
+    if (selected && !isHandleTouch) {
       store.setState({ multiSelectionActive: false });
     }
     longPressTriggered.current = false;
