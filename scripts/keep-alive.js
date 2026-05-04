@@ -25,4 +25,4 @@ async function keepAlive() {
   console.log('接続成功: Supabaseプロジェクトのアクティブ状態を維持しました。');
 }
 
-keepAlive();
+await keepAlive();
