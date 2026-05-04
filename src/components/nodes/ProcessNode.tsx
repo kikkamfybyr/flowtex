@@ -63,32 +63,43 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     }, LONG_PRESS_DURATION);
   }, [id, store, cancelLongPress, selected]);
 
-  // Handle用のtouchendハンドラ: iOS Safariでのクリック-接続バグを回避
+  // Handle用のtouchendハンドラ: iOS SafariでclickイベントなしにタップでEdgeを繋ぐ
+  // iOS SafariではHandleのclickが発火しないことがあるため、touchendで接続ロジックを完全に引き取る。
+  // - 1回目のタップ: connectionClickStartHandleをセットしてclickを抑制
+  // - 2回目のタップ: 互換ハンドルなら接続、同一ハンドルならキャンセル
   const handleHandleTouchEnd = useCallback((e: React.TouchEvent, handleType: 'source' | 'target', handleId: string) => {
+    // clickを必ず抑制して、React FlowのonClickが割り込まないようにする
+    e.preventDefault();
+    e.stopPropagation();
+
     const state = store.getState();
     const startHandle = state.connectionClickStartHandle;
-    
-    // 既に別のハンドルがクリックされて接続待機状態である場合
-    if (startHandle && (startHandle.nodeId !== id || startHandle.id !== handleId)) {
-      if (startHandle.type !== handleType) {
-        e.preventDefault(); // Safariで後続のclickイベントが発火するのを防止（二重処理や選択解除を防ぐ）
-        e.stopPropagation();
-        
-        const connection = {
-          source: startHandle.type === 'source' ? startHandle.nodeId : id,
-          sourceHandle: (startHandle.type === 'source' ? startHandle.id : handleId) || null,
-          target: startHandle.type === 'target' ? startHandle.nodeId : id,
-          targetHandle: (startHandle.type === 'target' ? startHandle.id : handleId) || null,
-        };
-        
-        // React FlowのonConnectを手動で呼び出し
-        if (state.onConnect) {
-          state.onConnect(connection);
-        }
-        // 接続待機状態をクリア
-        store.setState({ connectionClickStartHandle: null });
+
+    if (!startHandle) {
+      // 1回目のタップ: 接続開始ハンドルを記録
+      store.setState({ connectionClickStartHandle: { nodeId: id, type: handleType, id: handleId } });
+      return;
+    }
+
+    // 同じハンドルを再タップ → キャンセル
+    if (startHandle.nodeId === id && startHandle.id === handleId) {
+      store.setState({ connectionClickStartHandle: null });
+      return;
+    }
+
+    // 2回目のタップ: 互換タイプなら接続
+    if (startHandle.type !== handleType) {
+      const connection = {
+        source: startHandle.type === 'source' ? startHandle.nodeId : id,
+        sourceHandle: (startHandle.type === 'source' ? startHandle.id : handleId) || null,
+        target: startHandle.type === 'target' ? startHandle.nodeId : id,
+        targetHandle: (startHandle.type === 'target' ? startHandle.id : handleId) || null,
+      };
+      if (state.onConnect) {
+        state.onConnect(connection);
       }
     }
+    store.setState({ connectionClickStartHandle: null });
   }, [id, store]);
 
   // touchmove: 指が大きく動いたらキャンセル
