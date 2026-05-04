@@ -32,17 +32,19 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
 
   // touchstart: 長押しタイマーを開始
   const handleTouchStart = useCallback((e: TouchEvent) => {
-    // 既に選択されているノードをタッチした場合は、複数ドラッグの開始の可能性が高い。
+    // マルチタッチの場合はキャンセル（ピンチズームなど）
+    // ※ multiSelectionActive のリセットより先に判定しないと、2本指タッチで誤って
+    //   multiSelectionActive が false にリセットされ複数選択が解除されてしまう。
+    if (e.touches.length > 1) {
+      cancelLongPress();
+      return;
+    }
+
+    // 既に選択されているノードをシングルタッチした場合は、複数ドラッグの開始の可能性が高い。
     // multiSelectionActiveがtrueのままだと、React Flowがドラッグ開始時にこのノードの選択を解除してしまうため、
     // ここで一時的にfalseにする。これにより、選択状態を維持したまま複数ノードを一緒にドラッグできる。
     if (selected) {
       store.setState({ multiSelectionActive: false });
-    }
-
-    // マルチタッチの場合はキャンセル
-    if (e.touches.length > 1) {
-      cancelLongPress();
-      return;
     }
     longPressTriggered.current = false;
     const touch = e.touches[0];
@@ -116,7 +118,8 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
   }, []);
 
   // DOM要素にタッチイベントハンドラをアタッチ
-  // Reactの合成イベントではなくネイティブイベントを使用（{ passive: false }で確実にpreventDefault可能）
+  // Reactの合成イベントではなくネイティブイベントを使用。スクロールを妨げないよう { passive: true } を指定。
+  // Handle上のtouchendはReact合成イベント（onTouchEnd）で処理するため、そちらでpreventDefaultが可能。
   useEffect(() => {
     const el = nodeRef.current;
     if (!el) return;
