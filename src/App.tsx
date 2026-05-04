@@ -33,6 +33,9 @@ function StoreRefSetter({ storeRef }: { storeRef: React.MutableRefObject<ReturnT
 const nodeTypes = { process: ProcessNode };
 const edgeTypes = { process_edge: ProcessEdge };
 
+// 合流エッジのベンドポイント計算に使う定数（ProcessEdge.tsx の DEFAULT_MERGE_OFFSET と対応）
+const MIN_MERGE_OFFSET = 20;
+
 const initialNodes = [
   {
     id: 'node_1',
@@ -183,22 +186,86 @@ export default function App() {
 
   const onNodeDragStop = useCallback<OnNodeDrag>((_event, _node, nodesToUpdate) => {
     takeSnapshot();
-    // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ
+
+    const draggedIds = new Set(nodesToUpdate.map((n) => n.id));
+
+    // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ。
+    // スナップ後の座標をここで確定し、setNodes / setEdges の両方で同じ値を使う。
+    const snappedPositions = new Map<string, { x: number; y: number }>();
+    nodesToUpdate.forEach((n) => {
+      snappedPositions.set(n.id, {
+        x: Math.round(n.position.x / 10) * 10,
+        y: Math.round(n.position.y / 10) * 10,
+      });
+    });
+
     setNodes((nds) =>
       nds.map((n) => {
-        if (nodesToUpdate.some((u) => u.id === n.id)) {
-          return {
-            ...n,
-            position: {
-              x: Math.round(n.position.x / 10) * 10,
-              y: Math.round(n.position.y / 10) * 10,
-            },
-          };
-        }
-        return n;
+        const snapped = snappedPositions.get(n.id);
+        return snapped ? { ...n, position: snapped } : n;
       })
     );
-  }, [takeSnapshot, setNodes]);
+
+    // 合流グループのベンドポイントを再整列する（ソースノードが移動したとき）
+    setEdges((eds) => {
+      // 非ブランチエッジの入り本数をターゲットごとにカウント
+      const incomingCount = new Map<string, number>();
+      eds.forEach((e) => {
+        if (!(e.data?.isBranch)) {
+          incomingCount.set(e.target, (incomingCount.get(e.target) ?? 0) + 1);
+        }
+      });
+
+      // ドラッグされたノードをソースとする合流ターゲットを収集
+      const affectedTargets = new Set<string>();
+      eds.forEach((e) => {
+        if (draggedIds.has(e.source) && (incomingCount.get(e.target) ?? 0) > 1 && !(e.data?.isBranch)) {
+          affectedTargets.add(e.target);
+        }
+      });
+
+      if (affectedTargets.size === 0) return eds;
+
+      // ノードマップを構築（スナップ後の確定座標を使用）
+      const nodeMap = new Map(
+        nodes.map((n) => {
+          const snapped = snappedPositions.get(n.id);
+          return [n.id, snapped ? { ...n, position: snapped } : n];
+        })
+      );
+
+      const getSourceHandleY = (sourceId: string): number | null => {
+        const n = nodeMap.get(sourceId);
+        if (!n) return null;
+        const measured = (n as any).measured as { height?: number } | undefined;
+        const h = measured?.height ?? (n as any).height ?? 80;
+        return n.position.y + h;
+      };
+
+      let result = eds;
+      affectedTargets.forEach((targetId) => {
+        const mergeEdges = result.filter((e) => e.target === targetId && !(e.data?.isBranch));
+        if (mergeEdges.length <= 1) return;
+
+        // 各エッジの最小ベンドY（ソース底辺 + MIN_MERGE_OFFSET）
+        const minBendYs = mergeEdges.map((e) => {
+          const hy = getSourceHandleY(e.source);
+          return hy === null ? null : hy + MIN_MERGE_OFFSET;
+        });
+        if (minBendYs.some((y) => y === null)) return;
+
+        const alignedBendY = Math.max(...(minBendYs as number[]));
+        result = result.map((e) => {
+          if (e.target !== targetId || e.data?.isBranch) return e;
+          const hy = getSourceHandleY(e.source);
+          if (hy === null) return e;
+          return { ...e, data: { ...e.data, mergeOffset: Math.max(MIN_MERGE_OFFSET, alignedBendY - hy) } };
+        });
+      });
+
+      return result;
+    });
+  }, [takeSnapshot, setNodes, setEdges, nodes]);
 
   // --- Local Persistence & State Loading ---
   useEffect(() => {
@@ -270,7 +337,6 @@ export default function App() {
         // 合流（同じターゲットに複数エッジが入る）時: ベンドポイントのY座標を揃える
         // 非ブランチの合流エッジを対象に、最も低い（Y値最大の）ベンドYに統一する
         const DEFAULT_MERGE_OFFSET = 50;
-        const MIN_MERGE_OFFSET = 20;
         const mergeEdges = result.filter(e => e.target === params.target && !(e.data?.isBranch));
         if (mergeEdges.length > 1) {
           const getSourceHandleY = (sourceId: string) => {
