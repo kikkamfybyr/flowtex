@@ -269,18 +269,21 @@ export default function App() {
 
         // 合流（同じターゲットに複数エッジが入る）時: ベンドポイントのY座標を揃える
         // 非ブランチの合流エッジを対象に、最も低い（Y値最大の）ベンドYに統一する
+        const DEFAULT_MERGE_OFFSET = 50;
+        const MIN_MERGE_OFFSET = 20;
         const mergeEdges = result.filter(e => e.target === params.target && !(e.data?.isBranch));
         if (mergeEdges.length > 1) {
           const getSourceHandleY = (sourceId: string) => {
             const srcNode = nodes.find(n => n.id === sourceId);
             if (!srcNode) return null;
-            const h = (srcNode as any).measured?.height ?? (srcNode as any).height ?? 80;
-            return (srcNode.position.y as number) + h;
+            const measured = (srcNode as any).measured as { height?: number } | undefined;
+            const h = measured?.height ?? (srcNode as any).height ?? 80;
+            return srcNode.position.y + h;
           };
           const bendYs = mergeEdges.map(e => {
             const hy = getSourceHandleY(e.source);
             if (hy === null) return null;
-            return hy + ((e.data?.mergeOffset as number) ?? 50);
+            return hy + ((e.data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET);
           });
           if (bendYs.every(y => y !== null)) {
             const alignedBendY = Math.max(...(bendYs as number[]));
@@ -288,7 +291,7 @@ export default function App() {
               if (e.target === params.target && !(e.data?.isBranch)) {
                 const hy = getSourceHandleY(e.source);
                 if (hy === null) return e;
-                return { ...e, data: { ...e.data, mergeOffset: Math.max(20, alignedBendY - hy) } };
+                return { ...e, data: { ...e.data, mergeOffset: Math.max(MIN_MERGE_OFFSET, alignedBendY - hy) } };
               }
               return e;
             });
