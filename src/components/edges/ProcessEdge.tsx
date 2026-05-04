@@ -127,6 +127,12 @@ export const ProcessEdge = ({
     midY = labelY;
   }
 
+  // 合流（isActualMerge）の場合、×ボタンがターゲットノードに被らないようにmidYを上方にクランプ
+  const EDGE_BUTTON_MARGIN = 36;
+  if (isActualMerge) {
+    midY = Math.min(midY, targetY - EDGE_BUTTON_MARGIN);
+  }
+
   const handleDeleteEdge = () => {
     setEdges(eds => eds.filter(e => e.id !== id));
   };
@@ -277,6 +283,27 @@ export const ProcessEdge = ({
       />
 
       <EdgeLabelRenderer>
+        {/* 合流前の操作（＋ボタン） - 合流時のみ表示 */}
+        <div
+          style={{
+            position: 'absolute',
+            transform: `translate(-50%, -50%) translate(${targetX}px,${targetY - 25}px)`,
+            pointerEvents: 'all',
+            display: isActualMerge ? 'flex' : 'none',
+            alignItems: 'center',
+            backgroundColor: 'var(--panel-bg)',
+            padding: '2px',
+            borderRadius: '20px',
+            border: '1px solid var(--panel-border)',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            zIndex: 1001,
+            opacity: 0.9,
+          }}
+          className="edge-tool-group-merge nodrag nopan"
+        >
+          <button className="add-edge-reagent-btn" onClick={handleAddReagent} title="合流前に試薬を追加">+</button>
+        </div>
+
         {/* トランク部分の操作（＋ボタン） - 分岐時のみ表示 */}
         <div
           style={{

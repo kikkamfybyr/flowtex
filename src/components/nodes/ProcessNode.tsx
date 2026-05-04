@@ -77,7 +77,10 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
 
     if (!startHandle) {
       // 1回目のタップ: 接続開始ハンドルを記録
+      // cancelConnection を先取りしてドラッグ系のプレビュー線（灰色の線）を消す
+      const { cancelConnection } = store.getState();
       store.setState({ connectionClickStartHandle: { nodeId: id, type: handleType, id: handleId } });
+      cancelConnection();
       return;
     }
 

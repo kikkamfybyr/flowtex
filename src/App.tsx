@@ -223,9 +223,18 @@ export default function App() {
   const onConnect = useCallback(
     (params: Connection) => {
       takeSnapshot();
-      setEdges((eds) =>
-        addEdge({ ...params, type: 'process_edge', data: { reagents: [] } }, eds)
-      );
+      setEdges((eds) => {
+        // sourceにすでに子があれば、新エッジも既存エッジも全てisBranch:trueにする
+        const sourceHasChildren = eds.some(e => e.source === params.source);
+        const newEdge = { ...params, type: 'process_edge', data: { reagents: [], isBranch: sourceHasChildren } };
+        let result = addEdge(newEdge, eds);
+        if (sourceHasChildren) {
+          result = result.map(e =>
+            e.source === params.source ? { ...e, data: { ...e.data, isBranch: true } } : e
+          );
+        }
+        return result;
+      });
     },
     [setEdges, takeSnapshot]
   );
