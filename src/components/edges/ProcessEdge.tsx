@@ -23,6 +23,35 @@ const getEdgeDegreeCounts = (edges: Array<{ source: string; target: string }>) =
   return counts;
 };
 
+const DEFAULT_MERGE_OFFSET = 50;
+
+// ターゲットに集まる全エッジ（ブランチ・非ブランチ問わず）の実効ベンドYを計算し、
+// 最大値を返す。これにより、異なる高さから来るエッジの水平セグメントを同じYに揃える。
+const computeAlignedMergeBendY = (
+  targetId: string,
+  allEdges: Array<{ source: string; target: string; data?: Record<string, unknown> }>,
+  allNodes: Array<{ id: string; position: { x: number; y: number }; data?: unknown; [key: string]: unknown }>,
+  srcCounts: Map<string, number>
+): number | null => {
+  const bendYs: number[] = [];
+  for (const e of allEdges) {
+    if (e.target !== targetId) continue;
+    const srcNode = allNodes.find(n => n.id === e.source);
+    if (!srcNode) continue;
+    const measured = (srcNode as any).measured as { height?: number } | undefined;
+    const h = measured?.height ?? (srcNode as any).height ?? 80;
+    const hy = srcNode.position.y + h;
+    const isBranchEdge = !!(e.data?.isBranch) && (srcCounts.get(e.source) ?? 0) > 1;
+    if (isBranchEdge) {
+      const branchOff = (srcNode.data as any)?.branchOffset ?? DEFAULT_MERGE_OFFSET;
+      bendYs.push(hy + branchOff);
+    } else {
+      bendYs.push(hy + ((e.data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET));
+    }
+  }
+  return bendYs.length > 0 ? Math.max(...bendYs) : null;
+};
+
 export const ProcessEdge = ({
   id,
   source,
