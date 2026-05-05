@@ -124,8 +124,10 @@ export const ProcessEdge = ({
     const mergeOffset = (data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET;
     const mergeMidY = sourceY + mergeOffset;
     edgePath = `M ${sourceX},${sourceY} L ${sourceX},${mergeMidY} L ${targetX},${mergeMidY} L ${targetX},${targetY}`;
-    midX = targetX;
-    midY = (mergeMidY + targetY) / 2;
+    // ×ボタンは水平セグメントの中央に配置（分岐の枝と同様）
+    // 複数の合流エッジがあっても各 sourceX が異なるため重なりを避けられる
+    midX = (sourceX + targetX) / 2;
+    midY = mergeMidY;
   } else if (dx < 5) {
     edgePath = verticalPath;
     midX = sourceX;

@@ -614,6 +614,17 @@ export default function App() {
                   data: { text: '合流', sides: [] },
                 };
 
+                // 合流エッジのベンドYを揃えるため mergeOffset を計算する（onConnect と同じロジック）
+                const getSourceHandleY = (node: any) => {
+                  const measured = node.measured as { height?: number } | undefined;
+                  const h = measured?.height ?? node.height ?? 80;
+                  return node.position.y + h;
+                };
+                const sourceHandleYs = selectedNodes.map((n: any) => getSourceHandleY(n));
+                const maxSourceHandleY = Math.max(...sourceHandleYs);
+                const DEFAULT_MERGE_OFFSET_BTN = 50;
+                const alignedBendY = maxSourceHandleY + DEFAULT_MERGE_OFFSET_BTN;
+
                 const newEdges = selectedNodes.map((n: any) => ({
                   id: `edge_${n.id}_${newNodeId}`,
                   source: n.id,
@@ -621,7 +632,7 @@ export default function App() {
                   sourceHandle: 'bottom',
                   targetHandle: 'top',
                   type: 'process_edge',
-                  data: { reagents: [] }
+                  data: { reagents: [], mergeOffset: Math.max(MIN_MERGE_OFFSET, alignedBendY - getSourceHandleY(n)) }
                 }));
 
                 takeSnapshot();
