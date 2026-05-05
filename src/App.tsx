@@ -641,7 +641,6 @@ export default function App() {
                     data: { reagents: [], isBranch: sourceHasChildren, mergeOffset: Math.max(MIN_MERGE_OFFSET, alignedBendY - getSourceHandleY(n)) }
                   };
                 });
-
                 takeSnapshot();
                 setNodes(nds => nds.concat(newNode as any));
                 setEdges(eds => {
