@@ -2,12 +2,15 @@ import { BaseEdge, EdgeLabelRenderer, EdgeProps, getSmoothStepPath, useReactFlow
 import { Position } from '@xyflow/react';
 import { useCallback } from 'react';
 
+type MergeEdge = { source: string; target: string; data?: Record<string, unknown> };
+type MergeNode = { id: string; position: { x: number; y: number }; data?: unknown; [key: string]: unknown };
+
 const edgeDegreeCache = new WeakMap<object, {
   sourceCounts: Map<string, number>;
   targetCounts: Map<string, number>;
 }>();
 
-const getEdgeDegreeCounts = (edges: Array<{ source: string; target: string }>) => {
+const getEdgeDegreeCounts = (edges: MergeEdge[]) => {
   const cached = edgeDegreeCache.get(edges);
   if (cached) return cached;
 
@@ -29,8 +32,8 @@ const DEFAULT_MERGE_OFFSET = 50;
 // 最大値を返す。これにより、異なる高さから来るエッジの水平セグメントを同じYに揃える。
 const computeAlignedMergeBendY = (
   targetId: string,
-  allEdges: Array<{ source: string; target: string; data?: Record<string, unknown> }>,
-  allNodes: Array<{ id: string; position: { x: number; y: number }; data?: unknown; [key: string]: unknown }>,
+  allEdges: MergeEdge[],
+  allNodes: MergeNode[],
   srcCounts: Map<string, number>
 ): number | null => {
   const bendYs: number[] = [];
@@ -68,9 +71,7 @@ export const ProcessEdge = ({
   const edges = useEdges();
   const sourceNode = nodes.find(n => n.id === source);
   const branchOffset = (sourceNode?.data as any)?.branchOffset ?? 50;
-  const { sourceCounts, targetCounts } = getEdgeDegreeCounts(
-    edges as Array<{ source: string; target: string }>
-  );
+  const { sourceCounts, targetCounts } = getEdgeDegreeCounts(edges as MergeEdge[]);
 
   // 線の出入り本数を動的にカウント
   const isActualBranch = (sourceCounts.get(source) || 0) > 1;
@@ -135,12 +136,13 @@ export const ProcessEdge = ({
   const alignedMergeBendY = isActualMerge
     ? computeAlignedMergeBendY(
         target,
-        edges as Array<{ source: string; target: string; data?: Record<string, unknown> }>,
-        nodes as Array<{ id: string; position: { x: number; y: number }; data?: unknown; [key: string]: unknown }>,
+        edges as MergeEdge[],
+        nodes as MergeNode[],
         sourceCounts
       )
     : null;
   const mergeOffset = (data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET;
+  // alignedMergeBendY が取得できない場合は従来の mergeOffset ベースにフォールバックする。
   const mergeMidY = alignedMergeBendY ?? (sourceY + mergeOffset);
   const shouldUseMergePath = isActualMerge && (!isBranch || (alignedMergeBendY !== null && alignedMergeBendY > branchMidY));
 
