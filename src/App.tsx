@@ -601,18 +601,10 @@ export default function App() {
               onClick={() => {
                 const selectedNodes = nodes.filter((n: any) => n.selected);
                 if (selectedNodes.length < 2) return;
-                const maxY = Math.max(...selectedNodes.map((n: any) => n.position.y));
                 const avgX = selectedNodes.reduce((sum: number, n: any) => sum + n.position.x, 0) / selectedNodes.length;
                 const x = Math.round(avgX / 10) * 10;
-                const y = Math.round((maxY + 260) / 10) * 10;
                 
                 const newNodeId = `node_${Date.now()}`;
-                const newNode = {
-                  id: newNodeId,
-                  type: 'process',
-                  position: { x, y },
-                  data: { text: '合流', sides: [] },
-                };
 
                 // 合流エッジのベンドYを揃えるため mergeOffset を計算する（onConnect と同じロジック）
                 const getSourceHandleY = (node: any) => {
@@ -624,6 +616,17 @@ export default function App() {
                 const maxSourceHandleY = Math.max(...sourceHandleYs);
                 const DEFAULT_MERGE_OFFSET_BTN = 50;
                 const alignedBendY = maxSourceHandleY + DEFAULT_MERGE_OFFSET_BTN;
+
+                // 合流ノードの配置Y: 揃えたベンドYから分岐間隔と同程度の短い距離だけ下に配置
+                const MERGE_BTN_GAP = 40;
+                const y = Math.round((alignedBendY + MERGE_BTN_GAP) / 10) * 10;
+
+                const newNode = {
+                  id: newNodeId,
+                  type: 'process',
+                  position: { x, y },
+                  data: { text: '合流', sides: [] },
+                };
 
                 const newEdges = selectedNodes.map((n: any) => ({
                   id: `edge_${n.id}_${newNodeId}`,
