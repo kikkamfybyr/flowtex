@@ -112,10 +112,19 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
 
     // 2回目のタップ: 互換タイプなら接続
     if (startHandle.type !== handleType) {
+      const sourceNodeId = startHandle.type === 'source' ? startHandle.nodeId : id;
+      const targetNodeId = startHandle.type === 'target' ? startHandle.nodeId : id;
+
+      // 自己ループは data.isLoop で管理するため、このパスでは自己接続を禁止する
+      if (sourceNodeId === targetNodeId) {
+        store.setState({ connectionClickStartHandle: null });
+        return;
+      }
+
       const connection = {
-        source: startHandle.type === 'source' ? startHandle.nodeId : id,
+        source: sourceNodeId,
         sourceHandle: (startHandle.type === 'source' ? startHandle.id : handleId) || null,
-        target: startHandle.type === 'target' ? startHandle.nodeId : id,
+        target: targetNodeId,
         targetHandle: (startHandle.type === 'target' ? startHandle.id : handleId) || null,
       };
       if (state.onConnect) {
