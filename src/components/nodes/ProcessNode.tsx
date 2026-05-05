@@ -1,13 +1,189 @@
-import { useState } from 'react';
-import { Handle, Position, NodeProps, useReactFlow, useEdges } from '@xyflow/react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Handle, Position, NodeProps, useReactFlow, useEdges, useStoreApi } from '@xyflow/react';
 import { PreviewTex } from '../PreviewTex';
 
 const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物質|挿入された工程|追加された枝|横追加|分岐 \d+)$/.test(t);
+
+// 長押し検出の閾値（ミリ秒）
+const LONG_PRESS_DURATION = 400;
+// 長押し中に指が動いた場合のキャンセル距離（ピクセル）
+const LONG_PRESS_MOVE_THRESHOLD = 10;
 
 export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
   const { setNodes, setEdges, getNode } = useReactFlow();
+  const store = useStoreApi();
+  const nodeRef = useRef<HTMLDivElement>(null);
+  // 長押しタイマーと初期タッチ位置を保持
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+  // 長押しが成立したかどうか（後続のclickイベントを抑制するため）
+  const longPressTriggered = useRef(false);
+
+  // 長押しタイマーをクリアするヘルパー
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    touchStartPos.current = null;
+  }, []);
+
+  // touchstart: 長押しタイマーを開始
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    // マルチタッチの場合はキャンセル（ピンチズームなど）
+    // ※ multiSelectionActive のリセットより先に判定しないと、2本指タッチで誤って
+    //   multiSelectionActive が false にリセットされ複数選択が解除されてしまう。
+    if (e.touches.length > 1) {
+      cancelLongPress();
+      return;
+    }
+
+    const isHandleTouch = (e.target as Element)?.closest('.react-flow__handle') !== null;
+    if (isHandleTouch) {
+      // ハンドルをタッチした際、React Flow の onTouchStart（XYHandle.onPointerDown）が
+      // 起動してドラッグ接続機構が始まると、微小な指の動きで connection.inProgress=true に
+      // なり灰色のプレビュー線が表示されてしまう。
+      // イベントのバブリングをここで止めることで React のイベントシステムに届かなくし、
+      // ドラッグ機構が起動しないようにする。接続処理は handleHandleTouchEnd で独自に行う。
+      e.stopPropagation();
+      return;
+    }
+
+    // 既に選択されているノードをシングルタッチした場合は、複数ドラッグの開始の可能性が高い。
+    // multiSelectionActiveがtrueのままだと、React Flowがドラッグ開始時にこのノードの選択を解除してしまうため、
+    // ここで一時的にfalseにする。これにより、選択状態を維持したまま複数ノードを一緒にドラッグできる。
+    if (selected) {
+      store.setState({ multiSelectionActive: false });
+    }
+    // ノード本体をタッチした場合、保留中の接続（connectionClickStartHandle）をキャンセルする。
+    // ハンドルをタップして接続開始状態になった後に別ノードの本体をタップすると灰色のプレビュー線が
+    // 残ってしまうバグを防ぐ。
+    const state = store.getState();
+    if (state.connectionClickStartHandle) {
+      state.cancelConnection();
+      store.setState({ connectionClickStartHandle: null });
+    }
+    longPressTriggered.current = false;
+    const touch = e.touches[0];
+    touchStartPos.current = { x: touch.clientX, y: touch.clientY };
+
+    longPressTimer.current = setTimeout(() => {
+      longPressTimer.current = null;
+      longPressTriggered.current = true;
+      // バイブレーションフィードバック
+      if (navigator.vibrate) navigator.vibrate(30);
+
+      // multiSelectionActive をセットし、現在のノードを選択に追加
+      const { addSelectedNodes } = store.getState();
+      store.setState({ multiSelectionActive: true });
+      addSelectedNodes([id]);
+    }, LONG_PRESS_DURATION);
+  }, [id, store, cancelLongPress, selected]);
+
+  // Handle用のtouchendハンドラ: iOS SafariでclickイベントなしにタップでEdgeを繋ぐ
+  // iOS SafariではHandleのclickが発火しないことがあるため、touchendで接続ロジックを完全に引き取る。
+  // - 1回目のタップ: connectionClickStartHandleをセットしてclickを抑制
+  // - 2回目のタップ: 互換ハンドルなら接続、同一ハンドルならキャンセル
+  const handleHandleTouchEnd = useCallback((e: React.TouchEvent, handleType: 'source' | 'target', handleId: string) => {
+    // clickを必ず抑制して、React FlowのonClickが割り込まないようにする。
+    // stopPropagation は呼ばない: handleTouchStart でドラッグ機構を起動させないよう
+    // バブリングを止めているため、ここで残留リスナーを心配する必要がなくなった。
+    e.preventDefault();
+
+    const state = store.getState();
+    const startHandle = state.connectionClickStartHandle;
+
+    if (!startHandle) {
+      // 1回目のタップ: 接続開始ハンドルを記録
+      // cancelConnection を先取りしてドラッグ系のプレビュー線（灰色の線）を消す
+      const { cancelConnection } = store.getState();
+      store.setState({ connectionClickStartHandle: { nodeId: id, type: handleType, id: handleId } });
+      cancelConnection();
+      return;
+    }
+
+    // 同じハンドルを再タップ → キャンセル
+    if (startHandle.nodeId === id && startHandle.id === handleId) {
+      store.setState({ connectionClickStartHandle: null });
+      return;
+    }
+
+    // 2回目のタップ: 互換タイプなら接続
+    if (startHandle.type !== handleType) {
+      const connection = {
+        source: startHandle.type === 'source' ? startHandle.nodeId : id,
+        sourceHandle: (startHandle.type === 'source' ? startHandle.id : handleId) || null,
+        target: startHandle.type === 'target' ? startHandle.nodeId : id,
+        targetHandle: (startHandle.type === 'target' ? startHandle.id : handleId) || null,
+      };
+      if (state.onConnect) {
+        state.onConnect(connection);
+        // onConnect後も灰色のプレビュー線が残ることがあるため、明示的にキャンセルして即座に消す
+        state.cancelConnection();
+      }
+    }
+    store.setState({ connectionClickStartHandle: null });
+  }, [id, store]);
+
+  // touchmove: 指が大きく動いたらキャンセル
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!touchStartPos.current || !longPressTimer.current) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartPos.current.x;
+    const dy = touch.clientY - touchStartPos.current.y;
+    if (Math.sqrt(dx * dx + dy * dy) > LONG_PRESS_MOVE_THRESHOLD) {
+      cancelLongPress();
+    }
+  }, [cancelLongPress]);
+
+  // touchend / touchcancel: タイマーをクリア
+  const handleTouchEnd = useCallback(() => {
+    cancelLongPress();
+  }, [cancelLongPress]);
+
+  // 長押し成立後の click イベントを抑制する
+  // （iOS Safariは長押し→指を離す→clickの順で発火するため）
+  const handleClickCapture = useCallback((e: MouseEvent) => {
+    if (longPressTriggered.current) {
+      e.stopPropagation();
+      e.preventDefault();
+      longPressTriggered.current = false;
+    }
+  }, []);
+
+  // DOM要素にタッチイベントハンドラをアタッチ
+  // Reactの合成イベントではなくネイティブイベントを使用。スクロールを妨げないよう { passive: true } を指定。
+  // Handle上のtouchendはReact合成イベント（onTouchEnd）で処理するため、そちらでpreventDefaultが可能。
+  useEffect(() => {
+    const el = nodeRef.current;
+    if (!el) return;
+    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+    el.addEventListener('touchmove', handleTouchMove, { passive: true });
+    el.addEventListener('touchend', handleTouchEnd, { passive: true });
+    el.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    el.addEventListener('click', handleClickCapture, true); // capturing phase
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove', handleTouchMove);
+      el.removeEventListener('touchend', handleTouchEnd);
+      el.removeEventListener('touchcancel', handleTouchEnd);
+      el.removeEventListener('click', handleClickCapture, true);
+      cancelLongPress();
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd, handleClickCapture, cancelLongPress]);
+
+  // contextmenu: デスクトップ右クリック & Android Chrome長押し用（従来のフォールバック）
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (navigator.vibrate) navigator.vibrate(30);
+    store.setState({ multiSelectionActive: true });
+    // Android Chrome等ではcontextmenuが確実に発火するため、ここでも選択追加
+    const { addSelectedNodes } = store.getState();
+    addSelectedNodes([id]);
+  };
   
   const allEdges = useEdges();
   const outgoingEdges = allEdges.filter(e => e.source === id);
@@ -241,9 +417,11 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
   const branchReagents = (data.branchReagents as any[]) || [];
 
   return (
-    <div className={`chem-node node-process ${selected ? 'selected' : ''}`} style={{ position: 'relative' }}>
+    <div ref={nodeRef} className={`chem-node node-process ${selected ? 'selected' : ''}`} style={{ position: 'relative' }}
+      onContextMenu={handleContextMenu}
+    >
       <button className="delete-btn" onClick={handleDelete} title="プロセス削除">×</button>
-      <Handle id="top" type="target" position={Position.Top} />
+      <Handle id="top" type="target" position={Position.Top} onTouchEnd={(e) => handleHandleTouchEnd(e, 'target', 'top')} />
       
       <div onClick={() => setIsEditing(true)}>
         {isEditing ? (
@@ -344,7 +522,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
         </div>
       )}
 
-      <Handle id="bottom" type="source" position={Position.Bottom} />
+      <Handle id="bottom" type="source" position={Position.Bottom} onTouchEnd={(e) => handleHandleTouchEnd(e, 'source', 'bottom')} />
     </div>
   );
 };
