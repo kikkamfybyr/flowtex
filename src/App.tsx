@@ -9,6 +9,7 @@ import {
   Background,
   Connection,
   SelectionMode,
+  useStoreApi,
 } from '@xyflow/react';
 import type { OnNodeDrag } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -20,8 +21,20 @@ import { supabase } from './lib/supabase';
 import { LicensePage } from './components/LicensePage';
 import { HelpPage } from './components/HelpPage';
 
+// Helper rendered inside ReactFlow that exposes the internal store via a ref.
+// This allows App (which is outside the ReactFlowProvider context) to call
+// store.setState() to reset multiSelectionActive when the pane is tapped.
+function StoreRefSetter({ storeRef }: { storeRef: React.MutableRefObject<ReturnType<typeof useStoreApi> | null> }) {
+  const store = useStoreApi();
+  useEffect(() => { storeRef.current = store; }, [store, storeRef]);
+  return null;
+}
+
 const nodeTypes = { process: ProcessNode };
 const edgeTypes = { process_edge: ProcessEdge };
+
+// 合流エッジのベンドポイント計算に使う定数（ProcessEdge.tsx の DEFAULT_MERGE_OFFSET と対応）
+const MIN_MERGE_OFFSET = 20;
 
 const initialNodes = [
   {
@@ -43,12 +56,47 @@ export default function App() {
   const [sideWidth, setSideWidth] = useState(450);
   const [showOutput, setShowOutput] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+  // Ref to the React Flow internal store, set by StoreRefSetter rendered inside ReactFlow.
+  const storeRef = useRef<ReturnType<typeof useStoreApi> | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 900);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // キャンバスの空白部分（パン領域）をタッチで終わったとき、接続待ち状態をキャンセルする。
+  // onPaneClick（clickイベント）は Safari で指が少しでも動くと発火しないため、
+  // native touchend リスナーをラッパー要素に直接追加して確実にキャンセルする。
+  useEffect(() => {
+    const el = reactFlowWrapper.current;
+    if (!el) return;
+    const handleWrapperTouchEnd = (e: TouchEvent) => {
+      const target = e.target as Element;
+      // ノード・ハンドル・エッジ・エッジラベル・コントロール上でのタッチは除外する
+      if (
+        target.closest('.react-flow__node') ||
+        target.closest('.react-flow__handle') ||
+        target.closest('.react-flow__edge') ||
+        target.closest('.react-flow__edgelabel-renderer') ||
+        target.closest('.react-flow__controls') ||
+        target.closest('.react-flow__minimap')
+      ) {
+        return;
+      }
+      // キャンバス空白部分のタッチ終了: 接続待ち状態をキャンセル
+      const store = storeRef.current;
+      if (!store) return;
+      store.setState({ multiSelectionActive: false });
+      const state = store.getState();
+      if (state.connectionClickStartHandle) {
+        state.cancelConnection();
+        store.setState({ connectionClickStartHandle: null });
+      }
+    };
+    el.addEventListener('touchend', handleWrapperTouchEnd);
+    return () => el.removeEventListener('touchend', handleWrapperTouchEnd);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Resize Sidebar Logic ---
   const isResizing = useRef(false);
@@ -138,22 +186,86 @@ export default function App() {
 
   const onNodeDragStop = useCallback<OnNodeDrag>((_event, _node, nodesToUpdate) => {
     takeSnapshot();
-    // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ
+
+    const draggedIds = new Set(nodesToUpdate.map((n) => n.id));
+
+    // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ。
+    // スナップ後の座標をここで確定し、setNodes / setEdges の両方で同じ値を使う。
+    const snappedPositions = new Map<string, { x: number; y: number }>();
+    nodesToUpdate.forEach((n) => {
+      snappedPositions.set(n.id, {
+        x: Math.round(n.position.x / 10) * 10,
+        y: Math.round(n.position.y / 10) * 10,
+      });
+    });
+
     setNodes((nds) =>
       nds.map((n) => {
-        if (nodesToUpdate.some((u) => u.id === n.id)) {
-          return {
-            ...n,
-            position: {
-              x: Math.round(n.position.x / 10) * 10,
-              y: Math.round(n.position.y / 10) * 10,
-            },
-          };
-        }
-        return n;
+        const snapped = snappedPositions.get(n.id);
+        return snapped ? { ...n, position: snapped } : n;
       })
     );
-  }, [takeSnapshot, setNodes]);
+
+    // 合流グループのベンドポイントを再整列する（ソースノードが移動したとき）
+    setEdges((eds) => {
+      // 非ブランチエッジの入り本数をターゲットごとにカウント
+      const incomingCount = new Map<string, number>();
+      eds.forEach((e) => {
+        if (!(e.data?.isBranch)) {
+          incomingCount.set(e.target, (incomingCount.get(e.target) ?? 0) + 1);
+        }
+      });
+
+      // ドラッグされたノードをソースとする合流ターゲットを収集
+      const affectedTargets = new Set<string>();
+      eds.forEach((e) => {
+        if (draggedIds.has(e.source) && (incomingCount.get(e.target) ?? 0) > 1 && !(e.data?.isBranch)) {
+          affectedTargets.add(e.target);
+        }
+      });
+
+      if (affectedTargets.size === 0) return eds;
+
+      // ノードマップを構築（スナップ後の確定座標を使用）
+      const nodeMap = new Map(
+        nodes.map((n) => {
+          const snapped = snappedPositions.get(n.id);
+          return [n.id, snapped ? { ...n, position: snapped } : n];
+        })
+      );
+
+      const getSourceHandleY = (sourceId: string): number | null => {
+        const n = nodeMap.get(sourceId);
+        if (!n) return null;
+        const measured = (n as any).measured as { height?: number } | undefined;
+        const h = measured?.height ?? (n as any).height ?? 80;
+        return n.position.y + h;
+      };
+
+      let result = eds;
+      affectedTargets.forEach((targetId) => {
+        const mergeEdges = result.filter((e) => e.target === targetId && !(e.data?.isBranch));
+        if (mergeEdges.length <= 1) return;
+
+        // 各エッジの最小ベンドY（ソース底辺 + MIN_MERGE_OFFSET）
+        const minBendYs = mergeEdges.map((e) => {
+          const hy = getSourceHandleY(e.source);
+          return hy === null ? null : hy + MIN_MERGE_OFFSET;
+        });
+        if (minBendYs.some((y) => y === null)) return;
+
+        const alignedBendY = Math.max(...(minBendYs as number[]));
+        result = result.map((e) => {
+          if (e.target !== targetId || e.data?.isBranch) return e;
+          const hy = getSourceHandleY(e.source);
+          if (hy === null) return e;
+          return { ...e, data: { ...e.data, mergeOffset: Math.max(MIN_MERGE_OFFSET, alignedBendY - hy) } };
+        });
+      });
+
+      return result;
+    });
+  }, [takeSnapshot, setNodes, setEdges, nodes]);
 
   // --- Local Persistence & State Loading ---
   useEffect(() => {
@@ -211,11 +323,51 @@ export default function App() {
   const onConnect = useCallback(
     (params: Connection) => {
       takeSnapshot();
-      setEdges((eds) =>
-        addEdge({ ...params, type: 'process_edge', data: { reagents: [] } }, eds)
-      );
+      setEdges((eds) => {
+        // sourceにすでに子があれば、新エッジも既存エッジも全てisBranch:trueにする
+        const sourceHasChildren = eds.some(e => e.source === params.source);
+        const newEdge = { ...params, type: 'process_edge', data: { reagents: [], isBranch: sourceHasChildren } };
+        let result = addEdge(newEdge, eds);
+        if (sourceHasChildren) {
+          result = result.map(e =>
+            e.source === params.source ? { ...e, data: { ...e.data, isBranch: true } } : e
+          );
+        }
+
+        // 合流（同じターゲットに複数エッジが入る）時: ベンドポイントのY座標を揃える
+        // 非ブランチの合流エッジを対象に、最も低い（Y値最大の）ベンドYに統一する
+        const DEFAULT_MERGE_OFFSET = 50;
+        const mergeEdges = result.filter(e => e.target === params.target && !(e.data?.isBranch));
+        if (mergeEdges.length > 1) {
+          const getSourceHandleY = (sourceId: string) => {
+            const srcNode = nodes.find(n => n.id === sourceId);
+            if (!srcNode) return null;
+            const measured = (srcNode as any).measured as { height?: number } | undefined;
+            const h = measured?.height ?? (srcNode as any).height ?? 80;
+            return srcNode.position.y + h;
+          };
+          const bendYs = mergeEdges.map(e => {
+            const hy = getSourceHandleY(e.source);
+            if (hy === null) return null;
+            return hy + ((e.data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET);
+          });
+          if (bendYs.every(y => y !== null)) {
+            const alignedBendY = Math.max(...(bendYs as number[]));
+            result = result.map(e => {
+              if (e.target === params.target && !(e.data?.isBranch)) {
+                const hy = getSourceHandleY(e.source);
+                if (hy === null) return e;
+                return { ...e, data: { ...e.data, mergeOffset: Math.max(MIN_MERGE_OFFSET, alignedBendY - hy) } };
+              }
+              return e;
+            });
+          }
+        }
+
+        return result;
+      });
     },
-    [setEdges, takeSnapshot]
+    [setEdges, nodes, takeSnapshot]
   );
 
   const onDrop = useCallback(
@@ -246,6 +398,23 @@ export default function App() {
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  // Reset iOS multi-select mode when the user taps the background pane.
+  // multiSelectionActive is set to true by ProcessNode's long-press handler so that
+  // subsequent node taps append to the selection. Here we clear it so the next
+  // lone tap on a node starts fresh with only that node selected.
+  const handlePaneClick = useCallback(() => {
+    const store = storeRef.current;
+    if (!store) return;
+    store.setState({ multiSelectionActive: false });
+    // ハンドルをタップして接続待ち状態のときにキャンバスの空白部分をタップした場合、
+    // connectionClickStartHandle が残ったままになり灰色の下書き線が表示され続けるため、ここでキャンセルする。
+    const state = store.getState();
+    if (state.connectionClickStartHandle) {
+      state.cancelConnection();
+      store.setState({ connectionClickStartHandle: null });
+    }
   }, []);
 
   const texCode = generateTexCode(nodes as any, edges as any);
@@ -432,12 +601,26 @@ export default function App() {
               onClick={() => {
                 const selectedNodes = nodes.filter((n: any) => n.selected);
                 if (selectedNodes.length < 2) return;
-                const maxY = Math.max(...selectedNodes.map((n: any) => n.position.y));
                 const avgX = selectedNodes.reduce((sum: number, n: any) => sum + n.position.x, 0) / selectedNodes.length;
                 const x = Math.round(avgX / 10) * 10;
-                const y = Math.round((maxY + 160) / 10) * 10;
                 
                 const newNodeId = `node_${Date.now()}`;
+
+                // 合流エッジのベンドYを揃えるため mergeOffset を計算する（onConnect と同じロジック）
+                const getSourceHandleY = (node: any) => {
+                  const measured = node.measured as { height?: number } | undefined;
+                  const h = measured?.height ?? node.height ?? 80;
+                  return node.position.y + h;
+                };
+                const sourceHandleYs = selectedNodes.map((n: any) => getSourceHandleY(n));
+                const maxSourceHandleY = Math.max(...sourceHandleYs);
+                const DEFAULT_MERGE_OFFSET_BTN = 50;
+                const alignedBendY = maxSourceHandleY + DEFAULT_MERGE_OFFSET_BTN;
+
+                // 合流ノードの配置Y: 揃えたベンドYから分岐間隔と同程度の短い距離だけ下に配置
+                const MERGE_BTN_GAP = 40;
+                const y = Math.round((alignedBendY + MERGE_BTN_GAP) / 10) * 10;
+
                 const newNode = {
                   id: newNodeId,
                   type: 'process',
@@ -452,7 +635,7 @@ export default function App() {
                   sourceHandle: 'bottom',
                   targetHandle: 'top',
                   type: 'process_edge',
-                  data: { reagents: [] }
+                  data: { reagents: [], mergeOffset: Math.max(MIN_MERGE_OFFSET, alignedBendY - getSourceHandleY(n)) }
                 }));
 
                 takeSnapshot();
@@ -552,6 +735,7 @@ export default function App() {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onNodeDragStop={onNodeDragStop}
+            onPaneClick={handlePaneClick}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             defaultEdgeOptions={{ type: 'process_edge' }}
@@ -563,8 +747,10 @@ export default function App() {
             selectionMode={SelectionMode.Partial}
             multiSelectionKeyCode="Shift"
             selectionKeyCode="Shift"
+            connectOnClick={true}
             preventScrolling={true}
           >
+            <StoreRefSetter storeRef={storeRef} />
             <Controls />
             <Background color="#aaa" gap={10} />
           </ReactFlow>

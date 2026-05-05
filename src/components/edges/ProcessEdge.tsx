@@ -23,6 +23,35 @@ const getEdgeDegreeCounts = (edges: Array<{ source: string; target: string }>) =
   return counts;
 };
 
+const DEFAULT_MERGE_OFFSET = 50;
+
+// ターゲットに集まる全エッジ（ブランチ・非ブランチ問わず）の実効ベンドYを計算し、
+// 最大値を返す。これにより、異なる高さから来るエッジの水平セグメントを同じYに揃える。
+const computeAlignedMergeBendY = (
+  targetId: string,
+  allEdges: Array<{ source: string; target: string; data?: Record<string, unknown> }>,
+  allNodes: Array<{ id: string; position: { x: number; y: number }; data?: unknown; [key: string]: unknown }>,
+  srcCounts: Map<string, number>
+): number | null => {
+  const bendYs: number[] = [];
+  for (const e of allEdges) {
+    if (e.target !== targetId) continue;
+    const srcNode = allNodes.find(n => n.id === e.source);
+    if (!srcNode) continue;
+    const measured = (srcNode as any).measured as { height?: number } | undefined;
+    const h = measured?.height ?? (srcNode as any).height ?? 80;
+    const hy = srcNode.position.y + h;
+    const isBranchEdge = !!(e.data?.isBranch) && (srcCounts.get(e.source) ?? 0) > 1;
+    if (isBranchEdge) {
+      const branchOff = (srcNode.data as any)?.branchOffset ?? DEFAULT_MERGE_OFFSET;
+      bendYs.push(hy + branchOff);
+    } else {
+      bendYs.push(hy + ((e.data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET));
+    }
+  }
+  return bendYs.length > 0 ? Math.max(...bendYs) : null;
+};
+
 export const ProcessEdge = ({
   id,
   source,
@@ -57,6 +86,11 @@ export const ProcessEdge = ({
     data?.isLoop ? 'right' : null;
   const reagents = (data?.reagents as any[]) || [];
   const markerId = `arrowhead-${id}`;
+  // Safari resolves url(#id) relative to the base URL of the document, but fails when
+  // the SVG defs are in a nested <svg> element.  Using the absolute page URL as a
+  // prefix forces all browsers to look up the marker in the current document.
+  const baseUrl = typeof window !== 'undefined' ? window.location.href.replace(/#.*$/, '') : '';
+  const markerUrl = `url(${baseUrl}#${markerId})`;
 
   // X座標の差
   const dx = Math.abs(sourceX - targetX);
@@ -112,6 +146,17 @@ export const ProcessEdge = ({
     edgePath = loopPath;
     midX = loopX;
     midY = (sourceY + targetY) / 2;
+  } else if (isActualMerge) {
+    // 合流時: ベンドポイントのY座標を揃えるためにZ字パスを使用
+    // mergeOffset は onConnect 時に揃えて edge.data に格納される
+    const DEFAULT_MERGE_OFFSET = 50;
+    const mergeOffset = (data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET;
+    const mergeMidY = sourceY + mergeOffset;
+    edgePath = `M ${sourceX},${sourceY} L ${sourceX},${mergeMidY} L ${targetX},${mergeMidY} L ${targetX},${targetY}`;
+    // ×ボタンは水平セグメントの中央に配置（分岐の枝と同様）
+    // 複数の合流エッジがあっても各 sourceX が異なるため重なりを避けられる
+    midX = (sourceX + targetX) / 2;
+    midY = mergeMidY;
   } else if (dx < 5) {
     edgePath = verticalPath;
     midX = sourceX;
@@ -120,6 +165,12 @@ export const ProcessEdge = ({
     edgePath = smoothPath;
     midX = labelX;
     midY = labelY;
+  }
+
+  // 合流（isActualMerge）の場合、×ボタンがターゲットノードに被らないようにmidYを上方にクランプ
+  const EDGE_BUTTON_MARGIN = 36;
+  if (isActualMerge) {
+    midY = Math.min(midY, targetY - EDGE_BUTTON_MARGIN);
   }
 
   const handleDeleteEdge = () => {
@@ -268,10 +319,33 @@ export const ProcessEdge = ({
       <BaseEdge
         path={edgePath}
         style={{ ...style, strokeWidth: 2, stroke: 'var(--edge-color)' }}
-        markerEnd={`url(#${markerId})`}
+        markerEnd={markerUrl}
       />
 
       <EdgeLabelRenderer>
+        {/* 合流前の操作（＋ボタン） - 合流時のみ表示 */}
+        {/* sourceX/sourceY を使うことで、出発ノードの直下に表示（分岐トランク+ボタンと対称的な配置） */}
+        {/* 同じ合流先に複数エッジが入るとき各エッジのボタンが重ならない効果もある */}
+        <div
+          style={{
+            position: 'absolute',
+            transform: `translate(-50%, -50%) translate(${sourceX}px,${sourceY + 25}px)`,
+            pointerEvents: 'all',
+            display: isActualMerge ? 'flex' : 'none',
+            alignItems: 'center',
+            backgroundColor: 'var(--panel-bg)',
+            padding: '2px',
+            borderRadius: '20px',
+            border: '1px solid var(--panel-border)',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            zIndex: 1001,
+            opacity: 0.9,
+          }}
+          className="edge-tool-group-merge nodrag nopan"
+        >
+          <button className="add-edge-reagent-btn" onClick={handleAddReagent} title="合流前に試薬を追加">+</button>
+        </div>
+
         {/* トランク部分の操作（＋ボタン） - 分岐時のみ表示 */}
         <div
           style={{
