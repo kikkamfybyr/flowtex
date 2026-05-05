@@ -132,12 +132,24 @@ export const ProcessEdge = ({
     borderRadius: 0,
   });
 
+  const alignedMergeBendY = isActualMerge
+    ? computeAlignedMergeBendY(
+        target,
+        edges as Array<{ source: string; target: string; data?: Record<string, unknown> }>,
+        nodes as Array<{ id: string; position: { x: number; y: number }; data?: unknown; [key: string]: unknown }>,
+        sourceCounts
+      )
+    : null;
+  const mergeOffset = (data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET;
+  const mergeMidY = alignedMergeBendY ?? (sourceY + mergeOffset);
+  const shouldUseMergePath = isActualMerge && (!isBranch || (alignedMergeBendY !== null && alignedMergeBendY > branchMidY));
+
   // パスの選択とラベル位置の決定
   let edgePath: string;
   let midX: number;
   let midY: number;
 
-  if (isBranch) {
+  if (isBranch && !shouldUseMergePath) {
     edgePath = familyTreePath;
     // 分岐の場合、ツール（削除ボタン等）は各枝（垂直部）の中央に配置
     midX = targetX;
@@ -149,9 +161,6 @@ export const ProcessEdge = ({
   } else if (isActualMerge) {
     // 合流時: ベンドポイントのY座標を揃えるためにZ字パスを使用
     // mergeOffset は onConnect 時に揃えて edge.data に格納される
-    const DEFAULT_MERGE_OFFSET = 50;
-    const mergeOffset = (data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET;
-    const mergeMidY = sourceY + mergeOffset;
     edgePath = `M ${sourceX},${sourceY} L ${sourceX},${mergeMidY} L ${targetX},${mergeMidY} L ${targetX},${targetY}`;
     // ×ボタンは水平セグメントの中央に配置（分岐の枝と同様）
     // 複数の合流エッジがあっても各 sourceX が異なるため重なりを避けられる
