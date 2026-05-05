@@ -604,7 +604,7 @@ export default function App() {
                 const maxY = Math.max(...selectedNodes.map((n: any) => n.position.y));
                 const avgX = selectedNodes.reduce((sum: number, n: any) => sum + n.position.x, 0) / selectedNodes.length;
                 const x = Math.round(avgX / 10) * 10;
-                const y = Math.round((maxY + 160) / 10) * 10;
+                const y = Math.round((maxY + 260) / 10) * 10;
                 
                 const newNodeId = `node_${Date.now()}`;
                 const newNode = {

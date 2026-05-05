@@ -125,7 +125,11 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
           if (dx === 0 && !isMerge) {
               texParts.push(`    \\draw [thick] (${edge.source}.south) -- ${targetAnchor};`);
           } else {
-              texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-0.6) -| ${targetAnchor};`);
+              // mergeOffset (px) を Y_SCALE で割って cm に変換し、各合流枝のベンドY座標を揃える
+              const DEFAULT_MERGE_OFFSET_TEX = 50;
+              const mergeOffsetPx = (edgeData.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET_TEX;
+              const texDrop = (mergeOffsetPx / Y_SCALE).toFixed(2);
+              texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-${texDrop}) -| ${targetAnchor};`);
           }
       }
     });
