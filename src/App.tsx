@@ -628,19 +628,30 @@ export default function App() {
                   data: { text: '合流', sides: [] },
                 };
 
-                const newEdges = selectedNodes.map((n: any) => ({
-                  id: `edge_${n.id}_${newNodeId}`,
-                  source: n.id,
-                  target: newNodeId,
-                  sourceHandle: 'bottom',
-                  targetHandle: 'top',
-                  type: 'process_edge',
-                  data: { reagents: [], mergeOffset: Math.max(MIN_MERGE_OFFSET, alignedBendY - getSourceHandleY(n)) }
-                }));
-
+                const newEdges = selectedNodes.map((n: any) => {
+                  // onConnect と同じ分岐分類ロジック: そのソースノードにすでに子があれば isBranch:true
+                  const sourceHasChildren = edges.some((e: any) => e.source === n.id);
+                  return {
+                    id: `edge_${n.id}_${newNodeId}`,
+                    source: n.id,
+                    target: newNodeId,
+                    sourceHandle: 'bottom',
+                    targetHandle: 'top',
+                    type: 'process_edge',
+                    data: { reagents: [], isBranch: sourceHasChildren, mergeOffset: Math.max(MIN_MERGE_OFFSET, alignedBendY - getSourceHandleY(n)) }
+                  };
+                });
                 takeSnapshot();
                 setNodes(nds => nds.concat(newNode as any));
-                setEdges(eds => eds.concat(newEdges as any));
+                setEdges(eds => {
+                  // 既存エッジも isBranch:true に更新（そのソースに今後 2本以上の子ができるため）
+                  const updatedExisting = eds.map((e: any) => {
+                    const isNewSource = selectedNodes.some((n: any) => n.id === e.source);
+                    if (isNewSource) return { ...e, data: { ...e.data, isBranch: true } };
+                    return e;
+                  });
+                  return updatedExisting.concat(newEdges as any);
+                });
               }} 
               style={{ backgroundColor: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
             >

@@ -2,13 +2,15 @@ name: Supabase Keep Alive
 
 on:
   schedule:
-    # 3日おきに実行（日本時間 月・木の朝9時頃など）
-    - cron: '0 0 */3 * *'
+    # 月・木の深夜0時UTC（週2回、約3〜4日間隔で一貫して実行）
+    - cron: '0 0 * * 1,4'
   workflow_dispatch: # 手動実行も可能に
 
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies

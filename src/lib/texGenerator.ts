@@ -124,12 +124,15 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
           const dx = Math.abs(srcSnapX - tgtSnapX);
           if (dx === 0 && !isMerge) {
               texParts.push(`    \\draw [thick] (${edge.source}.south) -- ${targetAnchor};`);
-          } else {
+          } else if (isMerge) {
               // mergeOffset (px) を Y_SCALE で割って cm に変換し、各合流枝のベンドY座標を揃える
               const DEFAULT_MERGE_OFFSET_PX = 50;
               const mergeOffsetPx = (edgeData.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET_PX;
               const texDrop = (mergeOffsetPx / Y_SCALE).toFixed(2);
               texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-${texDrop}) -| ${targetAnchor};`);
+          } else {
+              // 非合流の折れ線（X座標が異なる通常エッジ）
+              texParts.push(`    \\draw [thick] (${edge.source}.south) -| ${targetAnchor};`);
           }
       }
     });
@@ -137,6 +140,12 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
 
   // 2. 分岐線の描画
   if (branchGroups.size > 0) {
+    // ターゲットごとの全入力エッジ数（分岐・通常問わず）を数えておく
+    const incomingCountByTarget = new Map<string, number>();
+    edges.forEach(edge => {
+      incomingCountByTarget.set(edge.target, (incomingCountByTarget.get(edge.target) ?? 0) + 1);
+    });
+
     branchGroups.forEach((targets, sourceId) => {
       const splitCoord = `split_${sourceId}`;
       const srcNode = processById.get(sourceId);
@@ -145,7 +154,26 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
         const texOffset = -(offset / Y_SCALE).toFixed(2);
         texParts.push(`    \\draw [thick] (${sourceId}.south) -- ++(0,${texOffset}) coordinate (${splitCoord});`);
         targets.forEach(targetId => {
-          texParts.push(`    \\draw [thick] (${splitCoord}) -| (${targetId}.north);`);
+          // ターゲットに複数の入力エッジがあれば等間隔で分配（合流＋分岐の複合ケース）
+          const totalIncoming = incomingCountByTarget.get(targetId) ?? 1;
+          if (totalIncoming > 1) {
+            // すべての入力エッジ（分岐・通常）を左から X 座標順にソートしてインデックスを決定
+            // slice() でコピーしてから sort() することで edges 配列の破壊的変更を防ぐ
+            const allIncoming = edges.filter(e => e.target === targetId);
+            const sortedIncoming = allIncoming.slice().sort((a, b) => {
+              const xa = snappedXById.get(a.source) ?? 0;
+              const xb = snappedXById.get(b.source) ?? 0;
+              return xa - xb;
+            });
+            const idx = sortedIncoming.findIndex(e => e.source === sourceId);
+            // findIndex が -1 を返す（予期しないケース）場合は中央にフォールバック
+            const safeIdx = idx >= 0 ? idx : Math.floor(totalIncoming / 2);
+            const fraction = ((safeIdx + 1) / (totalIncoming + 1)).toFixed(2);
+            const targetAnchor = `($(${targetId}.north west)!${fraction}!(${targetId}.north east)$)`;
+            texParts.push(`    \\draw [thick] (${splitCoord}) -| ${targetAnchor};`);
+          } else {
+            texParts.push(`    \\draw [thick] (${splitCoord}) -| (${targetId}.north);`);
+          }
         });
       }
     });

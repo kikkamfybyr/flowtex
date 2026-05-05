@@ -337,10 +337,11 @@ export const ProcessEdge = ({
         {/* 合流前の操作（＋ボタン） - 合流時のみ表示 */}
         {/* sourceX/sourceY を使うことで、出発ノードの直下に表示（分岐トランク+ボタンと対称的な配置） */}
         {/* 同じ合流先に複数エッジが入るとき各エッジのボタンが重ならない効果もある */}
+        {/* 分岐かつ合流の場合はトランク+ボタンと重ならないよう少し下にオフセットする */}
         <div
           style={{
             position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${sourceX}px,${sourceY + 25}px)`,
+            transform: `translate(-50%, -50%) translate(${sourceX}px,${isBranch ? sourceY + 50 : sourceY + 25}px)`,
             pointerEvents: 'all',
             display: isActualMerge ? 'flex' : 'none',
             alignItems: 'center',
