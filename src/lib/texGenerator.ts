@@ -158,14 +158,17 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
           const totalIncoming = incomingCountByTarget.get(targetId) ?? 1;
           if (totalIncoming > 1) {
             // すべての入力エッジ（分岐・通常）を左から X 座標順にソートしてインデックスを決定
+            // slice() でコピーしてから sort() することで edges 配列の破壊的変更を防ぐ
             const allIncoming = edges.filter(e => e.target === targetId);
-            const sortedIncoming = allIncoming.sort((a, b) => {
+            const sortedIncoming = allIncoming.slice().sort((a, b) => {
               const xa = snappedXById.get(a.source) ?? 0;
               const xb = snappedXById.get(b.source) ?? 0;
               return xa - xb;
             });
             const idx = sortedIncoming.findIndex(e => e.source === sourceId);
-            const fraction = ((idx + 1) / (totalIncoming + 1)).toFixed(2);
+            // findIndex が -1 を返す（予期しないケース）場合は中央にフォールバック
+            const safeIdx = idx >= 0 ? idx : Math.floor(totalIncoming / 2);
+            const fraction = ((safeIdx + 1) / (totalIncoming + 1)).toFixed(2);
             const targetAnchor = `($(${targetId}.north west)!${fraction}!(${targetId}.north east)$)`;
             texParts.push(`    \\draw [thick] (${splitCoord}) -| ${targetAnchor};`);
           } else {
