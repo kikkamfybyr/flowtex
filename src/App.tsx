@@ -35,6 +35,7 @@ const edgeTypes = { process_edge: ProcessEdge };
 
 // 合流エッジのベンドポイント計算に使う定数（ProcessEdge.tsx の DEFAULT_MERGE_OFFSET と対応）
 const MIN_MERGE_OFFSET = 20;
+type HistorySnapshot = { nodes: any[]; edges: any[] };
 
 const initialNodes = [
   {
@@ -133,7 +134,7 @@ export default function App() {
   }, []);
 
   // --- Undo/Redo Logic ---
-  const [history, setHistory] = useState<{ past: any[]; future: any[] }>({
+  const [history, setHistory] = useState<{ past: HistorySnapshot[]; future: HistorySnapshot[] }>({
     past: [],
     future: [],
   });
@@ -157,33 +158,43 @@ export default function App() {
   }, []); // refを使うことで依存配列を空にでき、常に安定した関数参照になる
 
   const undo = useCallback(() => {
+    const previousStateRef: { current: HistorySnapshot | null } = { current: null };
     setHistory((prev) => {
       if (prev.past.length === 0) return prev;
       const previous = prev.past[prev.past.length - 1];
       const currentNodes = nodesRef.current;
       const currentEdges = edgesRef.current;
-      setNodes(previous.nodes);
-      setEdges(previous.edges);
+      previousStateRef.current = previous;
       return {
         past: prev.past.slice(0, -1),
         future: [{ nodes: currentNodes, edges: currentEdges }, ...prev.future],
       };
     });
+
+    if (previousStateRef.current) {
+      setNodes(previousStateRef.current.nodes);
+      setEdges(previousStateRef.current.edges);
+    }
   }, [setNodes, setEdges]);
 
   const redo = useCallback(() => {
+    const nextStateRef: { current: HistorySnapshot | null } = { current: null };
     setHistory((prev) => {
       if (prev.future.length === 0) return prev;
       const next = prev.future[0];
       const currentNodes = nodesRef.current;
       const currentEdges = edgesRef.current;
-      setNodes(next.nodes);
-      setEdges(next.edges);
+      nextStateRef.current = next;
       return {
         past: [...prev.past, { nodes: currentNodes, edges: currentEdges }],
         future: prev.future.slice(1),
       };
     });
+
+    if (nextStateRef.current) {
+      setNodes(nextStateRef.current.nodes);
+      setEdges(nextStateRef.current.edges);
+    }
   }, [setNodes, setEdges]);
 
   // Shortcuts

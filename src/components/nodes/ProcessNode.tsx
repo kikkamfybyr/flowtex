@@ -204,6 +204,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
   };
 
   const handleDelete = () => {
+    window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes((nds) => nds.filter((n) => n.id !== id));
     setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
   };
@@ -218,6 +219,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentCenterX = parentNode.position.x;
     const y = Math.round((positionAbsoluteY || 0) / 10) * 10;
 
+    window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes(nds => nds.concat({
       id: newNodeId,
       type: 'process',
@@ -364,7 +366,13 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       id: newNodeId,
       type: 'process',
       position: { x, y: y + INSERT_HEIGHT },
-      data: { text: '挿入された工程', sides: [] }
+      data: {
+        text: '挿入された工程',
+        sides: [],
+        ...((parentNode.data as any)?.branchOffset !== undefined
+          ? { branchOffset: (parentNode.data as any).branchOffset }
+          : {})
+      }
     };
 
     // allEdges（useEdges()のクロージャ）でBFSして全下流ノードIDを収集
