@@ -35,6 +35,7 @@ const edgeTypes = { process_edge: ProcessEdge };
 
 // 合流エッジのベンドポイント計算に使う定数（ProcessEdge.tsx の DEFAULT_MERGE_OFFSET と対応）
 const MIN_MERGE_OFFSET = 20;
+type HistorySnapshot = { nodes: any[]; edges: any[] };
 
 const initialNodes = [
   {
@@ -133,39 +134,70 @@ export default function App() {
   }, []);
 
   // --- Undo/Redo Logic ---
-  const [history, setHistory] = useState<{ past: any[]; future: any[] }>({
+  const [history, setHistory] = useState<{ past: HistorySnapshot[]; future: HistorySnapshot[] }>({
     past: [],
     future: [],
   });
 
+  // nodes/edgesの最新値を常に参照できるようにrefで追跡する。
+  // useCallbackの依存配列にnodes/edgesを含めると、カスタムイベント経由で
+  // 呼ばれた際に古いクロージャを参照してしまうstale closure問題が起きるため、
+  // refを使って依存配列から外せるようにする。
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  useEffect(() => { nodesRef.current = nodes; }, [nodes]);
+  useEffect(() => { edgesRef.current = edges; }, [edges]);
+
   const takeSnapshot = useCallback(() => {
+    const currentNodes = nodesRef.current;
+    const currentEdges = edgesRef.current;
     setHistory((prev) => ({
-      past: [...prev.past.slice(-49), { nodes, edges }], // Keep last 50 steps
+      past: [...prev.past.slice(-49), { nodes: currentNodes, edges: currentEdges }],
       future: [],
     }));
-  }, [nodes, edges]);
+  }, []); // refを使うことで依存配列を空にでき、常に安定した関数参照になる
 
   const undo = useCallback(() => {
-    if (history.past.length === 0) return;
-    const previous = history.past[history.past.length - 1];
-    setHistory((prev) => ({
-      past: prev.past.slice(0, -1),
-      future: [{ nodes, edges }, ...prev.future],
-    }));
-    setNodes(previous.nodes);
-    setEdges(previous.edges);
-  }, [history, nodes, edges, setNodes, setEdges]);
+    let previousState: HistorySnapshot | null = null;
+    setHistory((prev) => {
+      if (prev.past.length === 0) return prev;
+      const previous = prev.past[prev.past.length - 1];
+      const currentNodes = nodesRef.current;
+      const currentEdges = edgesRef.current;
+      previousState = previous;
+      return {
+        past: prev.past.slice(0, -1),
+        future: [{ nodes: currentNodes, edges: currentEdges }, ...prev.future],
+      };
+    });
+
+    const snapshot = previousState as HistorySnapshot | null;
+    if (snapshot) {
+      setNodes(snapshot.nodes);
+      setEdges(snapshot.edges);
+    }
+  }, [setNodes, setEdges]);
 
   const redo = useCallback(() => {
-    if (history.future.length === 0) return;
-    const next = history.future[0];
-    setHistory((prev) => ({
-      past: [...prev.past, { nodes, edges }],
-      future: prev.future.slice(1),
-    }));
-    setNodes(next.nodes);
-    setEdges(next.edges);
-  }, [history, nodes, edges, setNodes, setEdges]);
+    let nextState: HistorySnapshot | null = null;
+    setHistory((prev) => {
+      if (prev.future.length === 0) return prev;
+      const next = prev.future[0];
+      const currentNodes = nodesRef.current;
+      const currentEdges = edgesRef.current;
+      nextState = next;
+      return {
+        past: [...prev.past, { nodes: currentNodes, edges: currentEdges }],
+        future: prev.future.slice(1),
+      };
+    });
+
+    const snapshot = nextState as HistorySnapshot | null;
+    if (snapshot) {
+      setNodes(snapshot.nodes);
+      setEdges(snapshot.edges);
+    }
+  }, [setNodes, setEdges]);
 
   // Shortcuts
   useEffect(() => {
@@ -183,6 +215,14 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
+
+  // ProcessNode/ProcessEdge内のアクションからundoスナップショットを取るための
+  // カスタムイベントリスナー。takeSnapshotが安定した関数参照になったため、
+  // useEffectの依存配列が変化することなく常に最新のnodes/edgesを正しく保存できる。
+  useEffect(() => {
+    window.addEventListener('flowtex:take-snapshot', takeSnapshot);
+    return () => window.removeEventListener('flowtex:take-snapshot', takeSnapshot);
+  }, [takeSnapshot]);
 
   const onNodeDragStop = useCallback<OnNodeDrag>((_event, _node, nodesToUpdate) => {
     takeSnapshot();
@@ -715,7 +755,8 @@ export default function App() {
               <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>ノードの編集</span><br />
                 • ノードをクリックで編集<br />
-                • <code>↓追加</code> で連結、<code>⑂分岐</code> で分岐
+                • <code>↓追加</code> で連結、<code>⑂分岐</code> で分岐<br />
+                • <code>↓間に挿入</code> で間に割り込み
               </div>
               <div style={{ marginBottom: '6px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>試薬の追加</span><br />
@@ -726,7 +767,8 @@ export default function App() {
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>操作</span><br />
                 • <code>🔄</code> で回り込み<br />
                 • ノードの ● からドラッグで自由接続<br />
-                • <kbd style={{ fontSize: '12px' }}>Shift</kbd> + ドラッグで複数選択
+                • PC: <kbd style={{ fontSize: '12px' }}>Shift</kbd> + ドラッグで選択<br />
+                • モバイル: ノード長押しで複数選択
               </div>
             </div>
           )}
