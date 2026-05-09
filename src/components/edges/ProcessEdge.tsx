@@ -185,10 +185,12 @@ export const ProcessEdge = ({
   }
 
   const handleDeleteEdge = () => {
+    window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setEdges(eds => eds.filter(e => e.id !== id));
   };
 
   const handleToggleLoop = () => {
+    window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     const next = !loopDir ? 'right' : loopDir === 'right' ? 'left' : false;
     setEdges(eds => eds.map(e =>
       e.id === id ? { ...e, data: { ...e.data, isLoop: next } } : e
@@ -197,6 +199,7 @@ export const ProcessEdge = ({
 
 
   const handleAddReagent = () => {
+    window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setEdges((eds) => eds.map(e => {
       if (e.id === id) {
         const current = (e.data?.reagents as any[]) || [];
