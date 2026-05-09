@@ -184,6 +184,15 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
 
+  // ProcessNode内のアクション（間に挿入・枝を追加・横追加・分岐作成）からundoスナップショットを
+  // 取るためのカスタムイベントリスナー。ProcessNodeはApp外のコンテキストで動くため
+  // propsでtakeSnapshotを渡す代わりにwindowカスタムイベントで疎結合に連携する。
+  useEffect(() => {
+    const handleTakeSnapshot = () => takeSnapshot();
+    window.addEventListener('flowtex:take-snapshot', handleTakeSnapshot);
+    return () => window.removeEventListener('flowtex:take-snapshot', handleTakeSnapshot);
+  }, [takeSnapshot]);
+
   const onNodeDragStop = useCallback<OnNodeDrag>((_event, _node, nodesToUpdate) => {
     takeSnapshot();
 

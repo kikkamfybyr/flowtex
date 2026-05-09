@@ -266,12 +266,14 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       });
     }
 
+    window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes(nds => nds.concat(newNodes));
     setEdges(eds => eds.concat(newEdges));
     setBranchMenuOpen(false);
   };
 
   const handleAddSide = () => {
+    window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes((nds) => nds.map((n) => {
       if (n.id === id) {
         const sides = (n.data.sides as any[]) || [];
@@ -317,8 +319,6 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     }));
   };
 
-  // Unused handleBranchReagentAdd removed
-
   const handleBranchReagentChange = (reagentId: string, text: string) => {
     setNodes(nds => nds.map(n => {
       if (n.id === id) {
@@ -355,31 +355,50 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     if (!parentNode) return;
     const x = parentNode.position.x;
     const y = Math.round((positionAbsoluteY || 0) / 10) * 10;
-    
+    const INSERT_HEIGHT = 160;
+
+    // 挿入前にundoスナップショットを取る
+    window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
+
     const newNode = {
       id: newNodeId,
       type: 'process',
-      position: { x, y: y + 160 }, 
+      position: { x, y: y + INSERT_HEIGHT },
       data: { text: '挿入された工程', sides: [] }
     };
 
-    setNodes(nds => nds.concat(newNode as any));
-
-    setEdges(eds => {
-      return eds.map(e => {
-        if (e.source === id) {
-          return { ...e, source: newNodeId };
+    // allEdges（useEdges()のクロージャ）でBFSして全下流ノードIDを収集
+    const descendantIds = new Set<string>();
+    const bfsQueue = outgoingEdges.map(e => e.target);
+    bfsQueue.forEach(cid => descendantIds.add(cid));
+    while (bfsQueue.length > 0) {
+      const current = bfsQueue.shift()!;
+      allEdges.forEach(e => {
+        if (e.source === current && !descendantIds.has(e.target)) {
+          descendantIds.add(e.target);
+          bfsQueue.push(e.target);
         }
-        return e;
-      }).concat({
-        id: `edge_${id}_${newNodeId}`,
-        source: id,
-        target: newNodeId,
-        sourceHandle: 'bottom',
-        targetHandle: 'top',
-        type: 'process_edge'
       });
-    });
+    }
+
+    // 全下流ノードをINSERT_HEIGHTだけ下にずらし、新ノードを追加
+    setNodes(nds => nds.map(n =>
+      descendantIds.has(n.id)
+        ? { ...n, position: { ...n.position, y: n.position.y + INSERT_HEIGHT } }
+        : n
+    ).concat(newNode as any));
+
+    // このノードからのエッジの接続元を新ノードに付け替え、親→新ノードのエッジを追加
+    setEdges(eds => eds.map(e =>
+      e.source === id ? { ...e, source: newNodeId } : e
+    ).concat({
+      id: `edge_${id}_${newNodeId}`,
+      source: id,
+      target: newNodeId,
+      sourceHandle: 'bottom',
+      targetHandle: 'top',
+      type: 'process_edge'
+    }));
   };
 
   const handleAddExtraBranch = () => {
@@ -399,6 +418,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const maxBranchX = branchChildrenX.length > 0 ? Math.max(...branchChildrenX) : parentX;
     const newX = maxBranchX + 180;
 
+    window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes(nds => nds.concat({
       id: newNodeId,
       type: 'process',
@@ -481,7 +501,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       )}
       {hasAnyChildren && (
         <div className="branch-reagents-section">
-          <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', justifyContent: 'center' }}>
             <button className="add-tool-btn" onClick={handleInsertNode} title="間にプロセスを割り込ませる">↓間に挿入</button>
             <button className="add-tool-btn" onClick={handleAddExtraBranch} title="新しい枝を1つ増やす">＋枝を追加</button>
           </div>
