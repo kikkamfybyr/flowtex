@@ -355,6 +355,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const newNodeId = `node_${Date.now()}`;
     const parentNode = getNode(id);
     if (!parentNode) return;
+    const parentData = (parentNode.data as any) || {};
     const x = parentNode.position.x;
     const y = Math.round((positionAbsoluteY || 0) / 10) * 10;
     const INSERT_HEIGHT = 160;
@@ -369,8 +370,8 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       data: {
         text: '挿入された工程',
         sides: [],
-        ...((parentNode.data as any)?.branchOffset !== undefined
-          ? { branchOffset: (parentNode.data as any).branchOffset }
+        ...(parentData.branchOffset !== undefined
+          ? { branchOffset: parentData.branchOffset }
           : {})
       }
     };

@@ -158,42 +158,44 @@ export default function App() {
   }, []); // refを使うことで依存配列を空にでき、常に安定した関数参照になる
 
   const undo = useCallback(() => {
-    const previousStateRef: { current: HistorySnapshot | null } = { current: null };
+    let previousState: HistorySnapshot | null = null;
     setHistory((prev) => {
       if (prev.past.length === 0) return prev;
       const previous = prev.past[prev.past.length - 1];
       const currentNodes = nodesRef.current;
       const currentEdges = edgesRef.current;
-      previousStateRef.current = previous;
+      previousState = previous;
       return {
         past: prev.past.slice(0, -1),
         future: [{ nodes: currentNodes, edges: currentEdges }, ...prev.future],
       };
     });
 
-    if (previousStateRef.current) {
-      setNodes(previousStateRef.current.nodes);
-      setEdges(previousStateRef.current.edges);
+    const snapshot = previousState as HistorySnapshot | null;
+    if (snapshot) {
+      setNodes(snapshot.nodes);
+      setEdges(snapshot.edges);
     }
   }, [setNodes, setEdges]);
 
   const redo = useCallback(() => {
-    const nextStateRef: { current: HistorySnapshot | null } = { current: null };
+    let nextState: HistorySnapshot | null = null;
     setHistory((prev) => {
       if (prev.future.length === 0) return prev;
       const next = prev.future[0];
       const currentNodes = nodesRef.current;
       const currentEdges = edgesRef.current;
-      nextStateRef.current = next;
+      nextState = next;
       return {
         past: [...prev.past, { nodes: currentNodes, edges: currentEdges }],
         future: prev.future.slice(1),
       };
     });
 
-    if (nextStateRef.current) {
-      setNodes(nextStateRef.current.nodes);
-      setEdges(nextStateRef.current.edges);
+    const snapshot = nextState as HistorySnapshot | null;
+    if (snapshot) {
+      setNodes(snapshot.nodes);
+      setEdges(snapshot.edges);
     }
   }, [setNodes, setEdges]);
 
