@@ -805,7 +805,7 @@ export default function App() {
           >
             <StoreRefSetter storeRef={storeRef} />
             <Controls />
-            <Background color="#aaa" gap={10} />
+            <Background color="#aaa" gap={20} />
           </ReactFlow>
         </ReactFlowProvider>
       </div>

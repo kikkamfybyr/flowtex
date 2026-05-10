@@ -425,7 +425,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       });
       
     const maxBranchX = branchChildrenX.length > 0 ? Math.max(...branchChildrenX) : parentX;
-    const newX = maxBranchX + 180;
+    const newX = Math.round((maxBranchX + 200) / 20) * 20;
 
     window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes(nds => nds.concat({
@@ -461,7 +461,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       <button className="delete-btn" onClick={handleDelete} title="プロセス削除">×</button>
       <Handle id="top" type="target" position={Position.Top} onTouchEnd={(e) => handleHandleTouchEnd(e, 'target', 'top')} />
       
-      <div onClick={() => { window.dispatchEvent(new CustomEvent('flowtex:take-snapshot')); setIsEditing(true); }}>
+      <div onClick={() => { if (!isEditing) { window.dispatchEvent(new CustomEvent('flowtex:take-snapshot')); setIsEditing(true); } }}>
         {isEditing ? (
           <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center', width: '100%' }}>
             {/* テキスト長に合わせた幅を確保するための非表示スパン */}
