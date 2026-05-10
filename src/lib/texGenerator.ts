@@ -1,13 +1,17 @@
 import { ChemNode, ChemEdge } from './types';
+import { DEFAULT_BRANCH_OFFSET, GRID_SIZE } from './layoutConstants';
 
 export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string => {
+  const TEX_X_QUANTIZE_PX = GRID_SIZE;
+  const TEX_X_SCALE = 80;
+  const TEX_Y_QUANTIZE_PX = 20;
+  const quantize = (value: number, step: number) => Math.round(value / step) * step;
   const processes = nodes.filter(n => n.type === 'process');
   const processById = new Map(processes.map((process) => [process.id, process]));
   const snappedXById = new Map(
-    processes.map((process) => [process.id, Math.round(process.position.x / 20) * 20])
+    processes.map((process) => [process.id, quantize(process.position.x, TEX_X_QUANTIZE_PX)])
   );
 
-  const X_SCALE = 100; 
   const Y_SCALE = 100; 
 
   let texParts: string[] = [];
@@ -52,10 +56,10 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
   texParts.push(`\n    % === ノード配置 ===`);
   processes.forEach(node => {
     const textStr = node.data.text.replace(/\n/g, '\\\\');
-    const snapX = Math.round(node.position.x / 20) * 20;
-    const snapY = Math.round(node.position.y / 20) * 20;
-    const tx = (snapX / X_SCALE).toFixed(2);
-    const ty = -(snapY / Y_SCALE).toFixed(2); 
+    const snapX = quantize(node.position.x, TEX_X_QUANTIZE_PX);
+    const snapY = quantize(node.position.y, TEX_Y_QUANTIZE_PX);
+    const tx = (snapX / TEX_X_SCALE).toFixed(2);
+    const ty = (-snapY / Y_SCALE).toFixed(2);
     texParts.push(`    \\node (${node.id}) [proc] at (${tx}, ${ty}) {${textStr}};`);
   });
 
@@ -108,7 +112,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
         : `(${targetId}.north)`;
 
       const srcSnapX = snappedXById.get(edge.source)!;
-      const srcTx = parseFloat((srcSnapX / X_SCALE).toFixed(2));
+      const srcTx = parseFloat((srcSnapX / TEX_X_SCALE).toFixed(2));
 
       if (loopDir) {
           const LOOP_OFFSET_CM = 2.5;
@@ -128,7 +132,8 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
               // mergeOffset (px) を Y_SCALE で割って cm に変換し、各合流枝のベンドY座標を揃える
               const DEFAULT_MERGE_OFFSET_PX = 50;
               const mergeOffsetPx = (edgeData.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET_PX;
-              const texDrop = (mergeOffsetPx / Y_SCALE).toFixed(2);
+              const quantizedMergeOffsetPx = quantize(mergeOffsetPx, TEX_Y_QUANTIZE_PX);
+              const texDrop = (quantizedMergeOffsetPx / Y_SCALE).toFixed(2);
               texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-${texDrop}) -| ${targetAnchor};`);
           } else {
               // 非合流の折れ線（X座標が異なる通常エッジ）
@@ -150,8 +155,9 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
       const splitCoord = `split_${sourceId}`;
       const srcNode = processById.get(sourceId);
       if (srcNode) {
-        const offset = (srcNode.data as any).branchOffset ?? 60;
-        const texOffset = -(offset / Y_SCALE).toFixed(2);
+        const offset = (srcNode.data as any).branchOffset ?? DEFAULT_BRANCH_OFFSET;
+        const quantizedOffsetPx = quantize(offset, TEX_Y_QUANTIZE_PX);
+        const texOffset = (-quantizedOffsetPx / Y_SCALE).toFixed(2);
         texParts.push(`    \\draw [thick] (${sourceId}.south) -- ++(0,${texOffset}) coordinate (${splitCoord});`);
         targets.forEach(targetId => {
           // ターゲットに複数の入力エッジがあれば等間隔で分配（合流＋分岐の複合ケース）

@@ -1,6 +1,7 @@
 import { BaseEdge, EdgeLabelRenderer, EdgeProps, getSmoothStepPath, useReactFlow, useNodes, useEdges } from '@xyflow/react';
 import { Position } from '@xyflow/react';
 import { useCallback } from 'react';
+import { DEFAULT_BRANCH_OFFSET } from '../../lib/layoutConstants';
 
 type MergeEdge = { source: string; target: string; data?: Record<string, unknown> };
 type MergeNode = { id: string; position: { x: number; y: number }; data?: unknown; [key: string]: unknown };
@@ -46,8 +47,8 @@ const computeAlignedMergeBendY = (
     const hy = srcNode.position.y + h;
     const isBranchEdge = !!(e.data?.isBranch) && (srcCounts.get(e.source) ?? 0) > 1;
     if (isBranchEdge) {
-      const branchOff = (srcNode.data as any)?.branchOffset ?? DEFAULT_MERGE_OFFSET;
-      bendYs.push(hy + branchOff);
+      const sourceBranchOffset = (srcNode.data as any)?.branchOffset ?? DEFAULT_BRANCH_OFFSET;
+      bendYs.push(hy + sourceBranchOffset);
     } else {
       bendYs.push(hy + ((e.data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET));
     }
@@ -70,7 +71,7 @@ export const ProcessEdge = ({
   const nodes = useNodes();
   const edges = useEdges();
   const sourceNode = nodes.find(n => n.id === source);
-  const branchOffset = (sourceNode?.data as any)?.branchOffset ?? 50;
+  const branchOffset = (sourceNode?.data as any)?.branchOffset ?? DEFAULT_BRANCH_OFFSET;
   const { sourceCounts, targetCounts } = getEdgeDegreeCounts(edges as MergeEdge[]);
 
   // 線の出入り本数を動的にカウント
