@@ -9,8 +9,8 @@ const LONG_PRESS_DURATION = 400;
 // 長押し中に指が動いた場合のキャンセル距離（ピクセル）
 const LONG_PRESS_MOVE_THRESHOLD = 10;
 const GRID_SIZE = 10;
-// 分岐作成時の枝ノード横間隔（旧出力寄り）
-const BRANCH_HORIZONTAL_SPACING = 300;
+// 分岐作成時の枝ノード横間隔（300→240で横広がりを抑えつつ、最小幅160より十分な余白を維持）
+const BRANCH_HORIZONTAL_SPACING = 240;
 // 分岐作成時の親ノードから枝ノードまでの縦距離（1.4相当）
 const BRANCH_CHILD_VERTICAL_GAP = 140;
 
@@ -250,8 +250,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const newEdges: any[] = [];
     
     // プロセスのデフォルト最小幅(160)より十分大きな間隔にする
-    const spacing = BRANCH_HORIZONTAL_SPACING;
-    const totalWidth = (count - 1) * spacing;
+    const totalWidth = (count - 1) * BRANCH_HORIZONTAL_SPACING;
     const startX = x - totalWidth / 2;
 
     for (let i = 0; i < count; i++) {
@@ -259,7 +258,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       newNodes.push({
         id: nodeId,
         type: 'process',
-        position: { x: startX + i * spacing, y: y + BRANCH_CHILD_VERTICAL_GAP },
+        position: { x: startX + i * BRANCH_HORIZONTAL_SPACING, y: y + BRANCH_CHILD_VERTICAL_GAP },
         data: { text: `分岐 ${i + 1}`, sides: [] }
       });
       newEdges.push({
