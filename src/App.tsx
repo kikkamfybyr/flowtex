@@ -18,6 +18,7 @@ import { ProcessNode } from './components/nodes/ProcessNode';
 import { ProcessEdge } from './components/edges/ProcessEdge';
 import { generateTexCode } from './lib/texGenerator';
 import { supabase } from './lib/supabase';
+import { GRID_SIZE } from './lib/layoutConstants';
 import { LicensePage } from './components/LicensePage';
 import { HelpPage } from './components/HelpPage';
 
@@ -35,7 +36,6 @@ const edgeTypes = { process_edge: ProcessEdge };
 
 // 合流エッジのベンドポイント計算に使う定数（ProcessEdge.tsx の DEFAULT_MERGE_OFFSET と対応）
 const MIN_MERGE_OFFSET = 20;
-const GRID_SIZE = 10;
 type HistorySnapshot = { nodes: any[]; edges: any[] };
 
 const initialNodes = [

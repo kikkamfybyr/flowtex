@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, useEdges, useStoreApi } from '@xyflow/react';
 import { PreviewTex } from '../PreviewTex';
+import { GRID_SIZE } from '../../lib/layoutConstants';
 
 const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物質|挿入された工程|追加された枝|横追加|分岐 \d+)$/.test(t);
 
@@ -8,8 +9,7 @@ const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物�
 const LONG_PRESS_DURATION = 400;
 // 長押し中に指が動いた場合のキャンセル距離（ピクセル）
 const LONG_PRESS_MOVE_THRESHOLD = 10;
-const GRID_SIZE = 10;
-// 分岐作成時の枝ノード横間隔（300→240で横広がりを抑えつつ、最小幅160より十分な余白を維持）
+// 分岐作成時の枝ノード横間隔（200→240で重なりを減らしつつ、横広がりを抑制）
 const BRANCH_HORIZONTAL_SPACING = 240;
 // 分岐作成時の親ノードから枝ノードまでの縦距離（1.4相当）
 const BRANCH_CHILD_VERTICAL_GAP = 140;
