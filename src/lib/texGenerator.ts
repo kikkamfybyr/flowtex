@@ -4,10 +4,10 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
   const processes = nodes.filter(n => n.type === 'process');
   const processById = new Map(processes.map((process) => [process.id, process]));
   const snappedXById = new Map(
-    processes.map((process) => [process.id, Math.round(process.position.x / 10) * 10])
+    processes.map((process) => [process.id, Math.round(process.position.x / 20) * 20])
   );
 
-  const X_SCALE = 60; 
+  const X_SCALE = 100; 
   const Y_SCALE = 100; 
 
   let texParts: string[] = [];
@@ -52,8 +52,8 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
   texParts.push(`\n    % === ノード配置 ===`);
   processes.forEach(node => {
     const textStr = node.data.text.replace(/\n/g, '\\\\');
-    const snapX = Math.round(node.position.x / 10) * 10;
-    const snapY = Math.round(node.position.y / 10) * 10;
+    const snapX = Math.round(node.position.x / 20) * 20;
+    const snapY = Math.round(node.position.y / 20) * 20;
     const tx = (snapX / X_SCALE).toFixed(2);
     const ty = -(snapY / Y_SCALE).toFixed(2); 
     texParts.push(`    \\node (${node.id}) [proc] at (${tx}, ${ty}) {${textStr}};`);

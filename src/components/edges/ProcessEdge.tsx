@@ -523,7 +523,7 @@ export const ProcessEdge = ({
                     style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px', fontSize: '10px', background: 'transparent', border: 'none', padding: '4px 0', margin: 0, lineHeight: 1.5 }}
                     value={reagent.text}
                     onChange={(e) => handleReagentChange(reagent.id, e.target.value)}
-                    onFocus={(e) => { if (e.target.value === '途中追加') e.target.select(); }}
+                    onFocus={(e) => { window.dispatchEvent(new CustomEvent('flowtex:take-snapshot')); if (e.target.value === '途中追加') e.target.select(); }}
                   />
                 </div>
                 <button className="del-mini" onClick={() => handleDeleteReagent(reagent.id)} style={{ fontSize: '12px' }}>×</button>

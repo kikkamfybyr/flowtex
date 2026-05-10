@@ -217,13 +217,13 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentNode = getNode(id);
     if (!parentNode) return;
     const parentCenterX = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 10) * 10;
+    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
 
     window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes(nds => nds.concat({
       id: newNodeId,
       type: 'process',
-      position: { x: parentCenterX, y: y + 160 },
+      position: { x: parentCenterX, y: y + 140 },
       data: { text: '新しい操作', sides: [] }
     } as any));
     setEdges(eds => eds.concat({
@@ -240,12 +240,12 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentNode = getNode(id);
     if (!parentNode) return;
     const x = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 10) * 10;
+    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
     const newNodes: any[] = [];
     const newEdges: any[] = [];
     
     // プロセスのデフォルト最小幅(160)より十分大きな間隔にする
-    const spacing = 180;
+    const spacing = 200;
     const totalWidth = (count - 1) * spacing;
     const startX = x - totalWidth / 2;
 
@@ -254,7 +254,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       newNodes.push({
         id: nodeId,
         type: 'process',
-        position: { x: startX + i * spacing, y: y + 160 },
+        position: { x: startX + i * spacing, y: y + 140 },
         data: { text: `分岐 ${i + 1}`, sides: [] }
       });
       newEdges.push({
@@ -357,8 +357,8 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     if (!parentNode) return;
     const parentData = (parentNode.data as any) || {};
     const x = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 10) * 10;
-    const INSERT_HEIGHT = 160;
+    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
+    const INSERT_HEIGHT = 140;
 
     // 挿入前にundoスナップショットを取る
     window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
@@ -415,7 +415,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentNode = getNode(id);
     if (!parentNode) return;
     const parentX = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 10) * 10;
+    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
 
     const branchChildrenX = outgoingEdges
       .filter(e => (e.data as any)?.isBranch)
@@ -431,7 +431,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     setNodes(nds => nds.concat({
       id: newNodeId,
       type: 'process',
-      position: { x: newX, y: y + 160 }, 
+      position: { x: newX, y: y + 140 }, 
       data: { text: '追加された枝', sides: [] }
     } as any));
 
@@ -461,7 +461,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       <button className="delete-btn" onClick={handleDelete} title="プロセス削除">×</button>
       <Handle id="top" type="target" position={Position.Top} onTouchEnd={(e) => handleHandleTouchEnd(e, 'target', 'top')} />
       
-      <div onClick={() => setIsEditing(true)}>
+      <div onClick={() => { window.dispatchEvent(new CustomEvent('flowtex:take-snapshot')); setIsEditing(true); }}>
         {isEditing ? (
           <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center', width: '100%' }}>
             {/* テキスト長に合わせた幅を確保するための非表示スパン */}
@@ -500,7 +500,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
                   style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px' }}
                   value={side.text} 
                   onChange={(e) => handleSideChange(side.id, e.target.value)}
-                  onFocus={(e) => { if (isDefaultText(e.target.value)) e.target.select(); }}
+                  onFocus={(e) => { window.dispatchEvent(new CustomEvent('flowtex:take-snapshot')); if (isDefaultText(e.target.value)) e.target.select(); }}
                 />
               </div>
               <button className="del-mini" onClick={() => handleSideDelete(side.id)}>×</button>
@@ -529,7 +529,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
                       style={{ gridArea: '1 / 1', width: '100%', minWidth: '40px' }}
                       value={r.text}
                       onChange={(e) => handleBranchReagentChange(r.id, e.target.value)}
-                      onFocus={(e) => { if (isDefaultText(e.target.value)) e.target.select(); }}
+                      onFocus={(e) => { window.dispatchEvent(new CustomEvent('flowtex:take-snapshot')); if (isDefaultText(e.target.value)) e.target.select(); }}
                     />
                   </div>
                   <button className="del-mini" onClick={() => handleBranchReagentDelete(r.id)}>×</button>
