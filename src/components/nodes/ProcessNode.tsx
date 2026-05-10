@@ -8,10 +8,11 @@ const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物�
 const LONG_PRESS_DURATION = 400;
 // 長押し中に指が動いた場合のキャンセル距離（ピクセル）
 const LONG_PRESS_MOVE_THRESHOLD = 10;
-// 分岐作成時の枝ノード横間隔（snapGrid=20 は維持）
-const BRANCH_HORIZONTAL_SPACING = 240;
-// 分岐作成時の親ノードから枝ノードまでの縦距離（分岐後を長めに確保）
-const BRANCH_CHILD_VERTICAL_GAP = 220;
+const GRID_SIZE = 10;
+// 分岐作成時の枝ノード横間隔（旧出力寄り）
+const BRANCH_HORIZONTAL_SPACING = 300;
+// 分岐作成時の親ノードから枝ノードまでの縦距離（1.4相当）
+const BRANCH_CHILD_VERTICAL_GAP = 140;
 
 export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -221,7 +222,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentNode = getNode(id);
     if (!parentNode) return;
     const parentCenterX = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
+    const y = Math.round((positionAbsoluteY || 0) / GRID_SIZE) * GRID_SIZE;
 
     window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes(nds => nds.concat({
@@ -244,7 +245,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentNode = getNode(id);
     if (!parentNode) return;
     const x = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
+    const y = Math.round((positionAbsoluteY || 0) / GRID_SIZE) * GRID_SIZE;
     const newNodes: any[] = [];
     const newEdges: any[] = [];
     
@@ -361,7 +362,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     if (!parentNode) return;
     const parentData = (parentNode.data as any) || {};
     const x = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
+    const y = Math.round((positionAbsoluteY || 0) / GRID_SIZE) * GRID_SIZE;
     const INSERT_HEIGHT = 140;
 
     // 挿入前にundoスナップショットを取る
@@ -419,7 +420,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentNode = getNode(id);
     if (!parentNode) return;
     const parentX = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
+    const y = Math.round((positionAbsoluteY || 0) / GRID_SIZE) * GRID_SIZE;
 
     const branchChildrenX = outgoingEdges
       .filter(e => (e.data as any)?.isBranch)
@@ -429,7 +430,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       });
       
     const maxBranchX = branchChildrenX.length > 0 ? Math.max(...branchChildrenX) : parentX;
-    const newX = Math.round((maxBranchX + BRANCH_HORIZONTAL_SPACING) / 20) * 20;
+    const newX = Math.round((maxBranchX + BRANCH_HORIZONTAL_SPACING) / GRID_SIZE) * GRID_SIZE;
 
     window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes(nds => nds.concat({
