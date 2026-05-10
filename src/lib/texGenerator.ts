@@ -150,7 +150,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
       const splitCoord = `split_${sourceId}`;
       const srcNode = processById.get(sourceId);
       if (srcNode) {
-        const offset = (srcNode.data as any).branchOffset ?? 60;
+        const offset = (srcNode.data as any).branchOffset ?? 40;
         const texOffset = -(offset / Y_SCALE).toFixed(2);
         texParts.push(`    \\draw [thick] (${sourceId}.south) -- ++(0,${texOffset}) coordinate (${splitCoord});`);
         targets.forEach(targetId => {

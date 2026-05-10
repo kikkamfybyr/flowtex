@@ -8,6 +8,10 @@ const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物�
 const LONG_PRESS_DURATION = 400;
 // 長押し中に指が動いた場合のキャンセル距離（ピクセル）
 const LONG_PRESS_MOVE_THRESHOLD = 10;
+// 分岐作成時の枝ノード横間隔（snapGrid=20 は維持）
+const BRANCH_HORIZONTAL_SPACING = 240;
+// 分岐作成時の親ノードから枝ノードまでの縦距離（分岐後を長めに確保）
+const BRANCH_CHILD_VERTICAL_GAP = 220;
 
 export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -245,7 +249,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const newEdges: any[] = [];
     
     // プロセスのデフォルト最小幅(160)より十分大きな間隔にする
-    const spacing = 200;
+    const spacing = BRANCH_HORIZONTAL_SPACING;
     const totalWidth = (count - 1) * spacing;
     const startX = x - totalWidth / 2;
 
@@ -254,7 +258,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       newNodes.push({
         id: nodeId,
         type: 'process',
-        position: { x: startX + i * spacing, y: y + 140 },
+        position: { x: startX + i * spacing, y: y + BRANCH_CHILD_VERTICAL_GAP },
         data: { text: `分岐 ${i + 1}`, sides: [] }
       });
       newEdges.push({
@@ -425,13 +429,13 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       });
       
     const maxBranchX = branchChildrenX.length > 0 ? Math.max(...branchChildrenX) : parentX;
-    const newX = Math.round((maxBranchX + 200) / 20) * 20;
+    const newX = Math.round((maxBranchX + BRANCH_HORIZONTAL_SPACING) / 20) * 20;
 
     window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes(nds => nds.concat({
       id: newNodeId,
       type: 'process',
-      position: { x: newX, y: y + 140 }, 
+      position: { x: newX, y: y + BRANCH_CHILD_VERTICAL_GAP }, 
       data: { text: '追加された枝', sides: [] }
     } as any));
 
