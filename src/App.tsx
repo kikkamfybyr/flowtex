@@ -18,6 +18,7 @@ import { ProcessNode } from './components/nodes/ProcessNode';
 import { ProcessEdge } from './components/edges/ProcessEdge';
 import { generateTexCode } from './lib/texGenerator';
 import { supabase } from './lib/supabase';
+import { GRID_SIZE } from './lib/layoutConstants';
 import { LicensePage } from './components/LicensePage';
 import { HelpPage } from './components/HelpPage';
 
@@ -234,8 +235,8 @@ export default function App() {
     const snappedPositions = new Map<string, { x: number; y: number }>();
     nodesToUpdate.forEach((n) => {
       snappedPositions.set(n.id, {
-        x: Math.round(n.position.x / 20) * 20,
-        y: Math.round(n.position.y / 20) * 20,
+        x: Math.round(n.position.x / GRID_SIZE) * GRID_SIZE,
+        y: Math.round(n.position.y / GRID_SIZE) * GRID_SIZE,
       });
     });
 
@@ -420,8 +421,8 @@ export default function App() {
         x: event.clientX,
         y: event.clientY,
       });
-      const snappedX = Math.round(position.x / 20) * 20;
-      const snappedY = Math.round(position.y / 20) * 20;
+      const snappedX = Math.round(position.x / GRID_SIZE) * GRID_SIZE;
+      const snappedY = Math.round(position.y / GRID_SIZE) * GRID_SIZE;
 
       const newNode = {
         id: `node_${Date.now()}`,
@@ -465,8 +466,8 @@ export default function App() {
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
     });
-    const x = Math.round((center.x || 300) / 20) * 20;
-    const y = Math.round((center.y || 200) / 20) * 20;
+    const x = Math.round((center.x || 300) / GRID_SIZE) * GRID_SIZE;
+    const y = Math.round((center.y || 200) / GRID_SIZE) * GRID_SIZE;
 
     const newNode = {
       id: `node_${Date.now()}`,
@@ -642,7 +643,7 @@ export default function App() {
                 const selectedNodes = nodes.filter((n: any) => n.selected);
                 if (selectedNodes.length < 2) return;
                 const avgX = selectedNodes.reduce((sum: number, n: any) => sum + n.position.x, 0) / selectedNodes.length;
-                const x = Math.round(avgX / 20) * 20;
+                const x = Math.round(avgX / GRID_SIZE) * GRID_SIZE;
                 
                 const newNodeId = `node_${Date.now()}`;
 
@@ -659,7 +660,7 @@ export default function App() {
 
                 // 合流ノードの配置Y: 揃えたベンドYから分岐間隔と同程度の短い距離だけ下に配置
                 const MERGE_BTN_GAP = 40;
-                const y = Math.round((alignedBendY + MERGE_BTN_GAP) / 20) * 20;
+                const y = Math.round((alignedBendY + MERGE_BTN_GAP) / GRID_SIZE) * GRID_SIZE;
 
                 const newNode = {
                   id: newNodeId,
@@ -793,7 +794,7 @@ export default function App() {
             edgeTypes={edgeTypes}
             defaultEdgeOptions={{ type: 'process_edge' }}
             snapToGrid={true}
-            snapGrid={[20, 20]}
+            snapGrid={[GRID_SIZE, GRID_SIZE]}
             nodeOrigin={[0.5, 0]}
             fitView
             fitViewOptions={{ padding: 0.1, maxZoom: 1.3 }}
@@ -805,7 +806,7 @@ export default function App() {
           >
             <StoreRefSetter storeRef={storeRef} />
             <Controls />
-            <Background color="#aaa" gap={20} />
+            <Background color="#aaa" gap={GRID_SIZE} />
           </ReactFlow>
         </ReactFlowProvider>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, useEdges, useStoreApi } from '@xyflow/react';
 import { PreviewTex } from '../PreviewTex';
+import { GRID_SIZE } from '../../lib/layoutConstants';
 
 const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物質|挿入された工程|追加された枝|横追加|分岐 \d+)$/.test(t);
 
@@ -8,6 +9,10 @@ const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物�
 const LONG_PRESS_DURATION = 400;
 // 長押し中に指が動いた場合のキャンセル距離（ピクセル）
 const LONG_PRESS_MOVE_THRESHOLD = 10;
+// 分岐作成時の枝ノード横間隔（重なりを減らしつつ、横広がりを抑制）
+const BRANCH_HORIZONTAL_SPACING = 240;
+// 分岐作成時の親ノードから枝ノードまでの縦距離（1.4相当）
+const BRANCH_CHILD_VERTICAL_GAP = 140;
 
 export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -217,7 +222,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentNode = getNode(id);
     if (!parentNode) return;
     const parentCenterX = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
+    const y = Math.round((positionAbsoluteY || 0) / GRID_SIZE) * GRID_SIZE;
 
     window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes(nds => nds.concat({
@@ -240,13 +245,12 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentNode = getNode(id);
     if (!parentNode) return;
     const x = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
+    const y = Math.round((positionAbsoluteY || 0) / GRID_SIZE) * GRID_SIZE;
     const newNodes: any[] = [];
     const newEdges: any[] = [];
     
     // プロセスのデフォルト最小幅(160)より十分大きな間隔にする
-    const spacing = 200;
-    const totalWidth = (count - 1) * spacing;
+    const totalWidth = (count - 1) * BRANCH_HORIZONTAL_SPACING;
     const startX = x - totalWidth / 2;
 
     for (let i = 0; i < count; i++) {
@@ -254,7 +258,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       newNodes.push({
         id: nodeId,
         type: 'process',
-        position: { x: startX + i * spacing, y: y + 140 },
+        position: { x: startX + i * BRANCH_HORIZONTAL_SPACING, y: y + BRANCH_CHILD_VERTICAL_GAP },
         data: { text: `分岐 ${i + 1}`, sides: [] }
       });
       newEdges.push({
@@ -357,7 +361,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     if (!parentNode) return;
     const parentData = (parentNode.data as any) || {};
     const x = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
+    const y = Math.round((positionAbsoluteY || 0) / GRID_SIZE) * GRID_SIZE;
     const INSERT_HEIGHT = 140;
 
     // 挿入前にundoスナップショットを取る
@@ -415,7 +419,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentNode = getNode(id);
     if (!parentNode) return;
     const parentX = parentNode.position.x;
-    const y = Math.round((positionAbsoluteY || 0) / 20) * 20;
+    const y = Math.round((positionAbsoluteY || 0) / GRID_SIZE) * GRID_SIZE;
 
     const branchChildrenX = outgoingEdges
       .filter(e => (e.data as any)?.isBranch)
@@ -425,13 +429,13 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       });
       
     const maxBranchX = branchChildrenX.length > 0 ? Math.max(...branchChildrenX) : parentX;
-    const newX = Math.round((maxBranchX + 200) / 20) * 20;
+    const newX = Math.round((maxBranchX + BRANCH_HORIZONTAL_SPACING) / GRID_SIZE) * GRID_SIZE;
 
     window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
     setNodes(nds => nds.concat({
       id: newNodeId,
       type: 'process',
-      position: { x: newX, y: y + 140 }, 
+      position: { x: newX, y: y + BRANCH_CHILD_VERTICAL_GAP }, 
       data: { text: '追加された枝', sides: [] }
     } as any));
 
