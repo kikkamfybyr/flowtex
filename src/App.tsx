@@ -41,7 +41,7 @@ const initialNodes = [
   {
     id: 'node_1',
     type: 'process',
-    position: { x: 400, y: 100 }, // 中心基準に合わせて調整
+    position: { x: 0, y: 0 }, // TeXコード出力が at (0, 0) になるよう設定（fitViewで画面上は中央表示）
     data: { text: '出発物質', sides: [] },
   },
 ];
@@ -234,8 +234,8 @@ export default function App() {
     const snappedPositions = new Map<string, { x: number; y: number }>();
     nodesToUpdate.forEach((n) => {
       snappedPositions.set(n.id, {
-        x: Math.round(n.position.x / 10) * 10,
-        y: Math.round(n.position.y / 10) * 10,
+        x: Math.round(n.position.x / 20) * 20,
+        y: Math.round(n.position.y / 20) * 20,
       });
     });
 
@@ -420,8 +420,8 @@ export default function App() {
         x: event.clientX,
         y: event.clientY,
       });
-      const snappedX = Math.round(position.x / 10) * 10;
-      const snappedY = Math.round(position.y / 10) * 10;
+      const snappedX = Math.round(position.x / 20) * 20;
+      const snappedY = Math.round(position.y / 20) * 20;
 
       const newNode = {
         id: `node_${Date.now()}`,
@@ -465,8 +465,8 @@ export default function App() {
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
     });
-    const x = Math.round((center.x || 300) / 10) * 10;
-    const y = Math.round((center.y || 200) / 10) * 10;
+    const x = Math.round((center.x || 300) / 20) * 20;
+    const y = Math.round((center.y || 200) / 20) * 20;
 
     const newNode = {
       id: `node_${Date.now()}`,
@@ -642,7 +642,7 @@ export default function App() {
                 const selectedNodes = nodes.filter((n: any) => n.selected);
                 if (selectedNodes.length < 2) return;
                 const avgX = selectedNodes.reduce((sum: number, n: any) => sum + n.position.x, 0) / selectedNodes.length;
-                const x = Math.round(avgX / 10) * 10;
+                const x = Math.round(avgX / 20) * 20;
                 
                 const newNodeId = `node_${Date.now()}`;
 
@@ -659,7 +659,7 @@ export default function App() {
 
                 // 合流ノードの配置Y: 揃えたベンドYから分岐間隔と同程度の短い距離だけ下に配置
                 const MERGE_BTN_GAP = 40;
-                const y = Math.round((alignedBendY + MERGE_BTN_GAP) / 10) * 10;
+                const y = Math.round((alignedBendY + MERGE_BTN_GAP) / 20) * 20;
 
                 const newNode = {
                   id: newNodeId,
@@ -793,7 +793,7 @@ export default function App() {
             edgeTypes={edgeTypes}
             defaultEdgeOptions={{ type: 'process_edge' }}
             snapToGrid={true}
-            snapGrid={[10, 10]}
+            snapGrid={[20, 20]}
             nodeOrigin={[0.5, 0]}
             fitView
             fitViewOptions={{ padding: 0.1, maxZoom: 1.3 }}
@@ -805,7 +805,7 @@ export default function App() {
           >
             <StoreRefSetter storeRef={storeRef} />
             <Controls />
-            <Background color="#aaa" gap={10} />
+            <Background color="#aaa" gap={20} />
           </ReactFlow>
         </ReactFlowProvider>
       </div>
