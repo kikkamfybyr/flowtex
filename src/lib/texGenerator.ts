@@ -1,5 +1,25 @@
 import { ChemNode, ChemEdge } from './types';
-import { DEFAULT_BRANCH_OFFSET, GRID_SIZE } from './layoutConstants';
+import { DEFAULT_BRANCH_OFFSET, DEFAULT_CHILD_VERTICAL_GAP, DEFAULT_MERGE_OFFSET, GRID_SIZE } from './layoutConstants';
+
+const MERGE_STEP = 0.10;
+const MIN_MERGE_FRACTION = 0.05;
+const MAX_MERGE_FRACTION = 0.95;
+
+/**
+ * Returns an in-bounds top-edge anchor fraction for merge targets.
+ * Small merge groups keep the fixed 0.10 step centered around 0.5 so the UI
+ * and TeX output stay visually aligned. Larger groups fall back to proportional
+ * spacing so anchors remain within the node width instead of spilling past 0..1.
+ */
+const getMergeAnchorFraction = (index: number, total: number): number => {
+  if (total <= 1) return 0.5;
+
+  const fixedStepSpan = (total - 1) * MERGE_STEP;
+  const rawFraction = fixedStepSpan <= (MAX_MERGE_FRACTION - MIN_MERGE_FRACTION)
+    ? 0.5 + (index - (total - 1) / 2) * MERGE_STEP
+    : (index + 1) / (total + 1);
+  return Math.min(MAX_MERGE_FRACTION, Math.max(MIN_MERGE_FRACTION, rawFraction));
+};
 
 export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string => {
   const TEX_X_QUANTIZE_PX = GRID_SIZE;
@@ -12,7 +32,11 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
     processes.map((process) => [process.id, quantize(process.position.x, TEX_X_QUANTIZE_PX)])
   );
 
-  const Y_SCALE = 100; 
+  // Backward-compat baseline from before spacing expansion in commit 3ecb7bf (px).
+  const BASE_UI_CHILD_VERTICAL_GAP = 140;
+  // Backward-compat baseline from the same pre-expansion TeX output scale.
+  const BASE_TEX_Y_SCALE = 100;
+  const Y_SCALE = (DEFAULT_CHILD_VERTICAL_GAP / BASE_UI_CHILD_VERTICAL_GAP) * BASE_TEX_Y_SCALE;
 
   let texParts: string[] = [];
 
@@ -105,8 +129,10 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
       const loopDir: 'right' | 'left' | null =
         edgeData.isLoop === 'left' ? 'left' : edgeData.isLoop ? 'right' : null;
 
-      // ターゲット位置（複数本なら等間隔、1本なら中央）
-      const fraction = ((index + 1) / (sortedEdges.length + 1)).toFixed(2);
+      // ターゲット位置: 合流の場合は中央寄せ（固定ステップ0.10）、1本なら中央
+      // N本合流: fraction = 0.5 + (index - (N-1)/2) * MERGE_STEP
+      // 例) N=2: 0.45, 0.55  N=3: 0.40, 0.50, 0.60
+      const fraction = isMerge ? getMergeAnchorFraction(index, sortedEdges.length).toFixed(2) : null;
       const targetAnchor = isMerge
         ? `($(${targetId}.north west)!${fraction}!(${targetId}.north east)$)`
         : `(${targetId}.north)`;
@@ -130,8 +156,8 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
               texParts.push(`    \\draw [thick] (${edge.source}.south) -- ${targetAnchor};`);
           } else if (isMerge) {
               // mergeOffset (px) を Y_SCALE で割って cm に変換し、各合流枝のベンドY座標を揃える
-              const DEFAULT_MERGE_OFFSET_PX = 50;
-              const mergeOffsetPx = (edgeData.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET_PX;
+              // デフォルトは branchOffset と同じ 40px (= 0.40cm) に統一
+              const mergeOffsetPx = (edgeData.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET;
               const quantizedMergeOffsetPx = quantize(mergeOffsetPx, TEX_Y_QUANTIZE_PX);
               const texDrop = (quantizedMergeOffsetPx / Y_SCALE).toFixed(2);
               texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-${texDrop}) -| ${targetAnchor};`);

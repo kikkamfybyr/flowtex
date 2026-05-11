@@ -1,10 +1,12 @@
 import { BaseEdge, EdgeLabelRenderer, EdgeProps, getSmoothStepPath, useReactFlow, useNodes, useEdges } from '@xyflow/react';
 import { Position } from '@xyflow/react';
 import { useCallback } from 'react';
-import { DEFAULT_BRANCH_OFFSET } from '../../lib/layoutConstants';
+import { DEFAULT_BRANCH_OFFSET, DEFAULT_MERGE_OFFSET } from '../../lib/layoutConstants';
 
 type MergeEdge = { source: string; target: string; data?: Record<string, unknown> };
 type MergeNode = { id: string; position: { x: number; y: number }; data?: unknown; [key: string]: unknown };
+// Canvas 上の見た目だけを少し縦に伸ばす係数（TeX 出力座標には影響しない）
+const UI_VERTICAL_STRETCH = 1.08;
 
 const edgeDegreeCache = new WeakMap<object, {
   sourceCounts: Map<string, number>;
@@ -26,8 +28,6 @@ const getEdgeDegreeCounts = (edges: MergeEdge[]) => {
   edgeDegreeCache.set(edges, counts);
   return counts;
 };
-
-const DEFAULT_MERGE_OFFSET = 50;
 
 // ターゲットに集まる全エッジ（ブランチ・非ブランチ問わず）の実効ベンドYを計算し、
 // 最大値を返す。これにより、異なる高さから来るエッジの水平セグメントを同じYに揃える。
@@ -99,7 +99,7 @@ export const ProcessEdge = ({
 
   // 1. 分岐パス（縦→横→縦）
   // ユーザーがドラッグで調整可能なオフセットを使用
-  const branchMidY = sourceY + branchOffset;
+  const branchMidY = sourceY + branchOffset * UI_VERTICAL_STRETCH;
   const familyTreePath = `M ${sourceX},${sourceY} L ${sourceX},${branchMidY} L ${targetX},${branchMidY} L ${targetX},${targetY}`;
 
   // 2. 垂直線パス（dx が小さい場合、斜め線を防ぐため sourceX に揃えた厳密な縦線を使う）
@@ -144,8 +144,11 @@ export const ProcessEdge = ({
     : null;
   const mergeOffset = (data?.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET;
   // alignedMergeBendY が取得できない場合は従来の mergeOffset ベースにフォールバックする。
-  const mergeMidY = alignedMergeBendY ?? (sourceY + mergeOffset);
-  const shouldUseMergePath = isActualMerge && (!isBranch || (alignedMergeBendY !== null && alignedMergeBendY > branchMidY));
+  const mergeOffsetFromSource = alignedMergeBendY !== null
+    ? alignedMergeBendY - sourceY
+    : mergeOffset;
+  const mergeMidY = sourceY + mergeOffsetFromSource * UI_VERTICAL_STRETCH;
+  const shouldUseMergePath = isActualMerge && (!isBranch || (alignedMergeBendY !== null && alignedMergeBendY > sourceY + branchOffset));
 
   // パスの選択とラベル位置の決定
   let edgePath: string;
@@ -180,7 +183,7 @@ export const ProcessEdge = ({
   }
 
   // 合流（isActualMerge）の場合、×ボタンがターゲットノードに被らないようにmidYを上方にクランプ
-  const EDGE_BUTTON_MARGIN = 36;
+  const EDGE_BUTTON_MARGIN = 16;
   if (isActualMerge) {
     midY = Math.min(midY, targetY - EDGE_BUTTON_MARGIN);
   }

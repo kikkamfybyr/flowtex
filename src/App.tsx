@@ -18,7 +18,7 @@ import { ProcessNode } from './components/nodes/ProcessNode';
 import { ProcessEdge } from './components/edges/ProcessEdge';
 import { generateTexCode } from './lib/texGenerator';
 import { supabase } from './lib/supabase';
-import { GRID_SIZE } from './lib/layoutConstants';
+import { DEFAULT_CHILD_VERTICAL_GAP, DEFAULT_MERGE_OFFSET, GRID_SIZE, MIN_MERGE_OFFSET } from './lib/layoutConstants';
 import { LicensePage } from './components/LicensePage';
 import { HelpPage } from './components/HelpPage';
 
@@ -34,8 +34,6 @@ function StoreRefSetter({ storeRef }: { storeRef: React.MutableRefObject<ReturnT
 const nodeTypes = { process: ProcessNode };
 const edgeTypes = { process_edge: ProcessEdge };
 
-// 合流エッジのベンドポイント計算に使う定数（ProcessEdge.tsx の DEFAULT_MERGE_OFFSET と対応）
-const MIN_MERGE_OFFSET = 20;
 type HistorySnapshot = { nodes: any[]; edges: any[] };
 
 const initialNodes = [
@@ -377,7 +375,6 @@ export default function App() {
 
         // 合流（同じターゲットに複数エッジが入る）時: ベンドポイントのY座標を揃える
         // 非ブランチの合流エッジを対象に、最も低い（Y値最大の）ベンドYに統一する
-        const DEFAULT_MERGE_OFFSET = 50;
         const mergeEdges = result.filter(e => e.target === params.target && !(e.data?.isBranch));
         if (mergeEdges.length > 1) {
           const getSourceHandleY = (sourceId: string) => {
@@ -655,12 +652,13 @@ export default function App() {
                 };
                 const sourceHandleYs = selectedNodes.map((n: any) => getSourceHandleY(n));
                 const maxSourceHandleY = Math.max(...sourceHandleYs);
-                const DEFAULT_MERGE_OFFSET_BTN = 50;
-                const alignedBendY = maxSourceHandleY + DEFAULT_MERGE_OFFSET_BTN;
-
-                // 合流ノードの配置Y: 揃えたベンドYから分岐間隔と同程度の短い距離だけ下に配置
-                const MERGE_BTN_GAP = 40;
-                const y = Math.round((alignedBendY + MERGE_BTN_GAP) / GRID_SIZE) * GRID_SIZE;
+                // 合流エッジの折れ線ベンドY: 共通のデフォルトオフセットと統一
+                const alignedBendY = maxSourceHandleY + DEFAULT_MERGE_OFFSET;
+                // 合流ノードの配置Y: 他の追加ロジック（通常・分岐）と同様に
+                // 親ノード上端 + 既定の縦間隔を基準にする。
+                const parentTops = selectedNodes.map((n: any) => n.position.y);
+                const maxParentTop = Math.max(...parentTops);
+                const y = Math.round((maxParentTop + DEFAULT_CHILD_VERTICAL_GAP) / GRID_SIZE) * GRID_SIZE;
 
                 const newNode = {
                   id: newNodeId,
