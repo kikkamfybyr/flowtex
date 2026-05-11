@@ -32,7 +32,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
     processes.map((process) => [process.id, quantize(process.position.x, TEX_X_QUANTIZE_PX)])
   );
 
-  const Y_SCALE = 100; 
+  const Y_SCALE = 130; 
 
   let texParts: string[] = [];
 
