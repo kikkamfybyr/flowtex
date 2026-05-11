@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, useEdges, useStoreApi } from '@xyflow/react';
 import { PreviewTex } from '../PreviewTex';
-import { GRID_SIZE } from '../../lib/layoutConstants';
+import { DEFAULT_CHILD_VERTICAL_GAP, GRID_SIZE } from '../../lib/layoutConstants';
 
 const isDefaultText = (t: string) => /^(プロセス|新しい操作|出発物質|挿入された工程|追加された枝|横追加|分岐 \d+)$/.test(t);
 
@@ -11,9 +11,6 @@ const LONG_PRESS_DURATION = 400;
 const LONG_PRESS_MOVE_THRESHOLD = 10;
 // 分岐作成時の枝ノード横間隔（重なりを減らしつつ、横広がりを抑制）
 const BRANCH_HORIZONTAL_SPACING = 240;
-// 分岐作成時の親ノードから枝ノードまでの縦距離（1.4相当）
-const BRANCH_CHILD_VERTICAL_GAP = 140;
-
 export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
@@ -228,7 +225,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     setNodes(nds => nds.concat({
       id: newNodeId,
       type: 'process',
-      position: { x: parentCenterX, y: y + 140 },
+      position: { x: parentCenterX, y: y + DEFAULT_CHILD_VERTICAL_GAP },
       data: { text: '新しい操作', sides: [] }
     } as any));
     setEdges(eds => eds.concat({
@@ -258,7 +255,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       newNodes.push({
         id: nodeId,
         type: 'process',
-        position: { x: startX + i * BRANCH_HORIZONTAL_SPACING, y: y + BRANCH_CHILD_VERTICAL_GAP },
+        position: { x: startX + i * BRANCH_HORIZONTAL_SPACING, y: y + DEFAULT_CHILD_VERTICAL_GAP },
         data: { text: `分岐 ${i + 1}`, sides: [] }
       });
       newEdges.push({
@@ -362,7 +359,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     const parentData = (parentNode.data as any) || {};
     const x = parentNode.position.x;
     const y = Math.round((positionAbsoluteY || 0) / GRID_SIZE) * GRID_SIZE;
-    const INSERT_HEIGHT = 140;
+    const INSERT_HEIGHT = DEFAULT_CHILD_VERTICAL_GAP;
 
     // 挿入前にundoスナップショットを取る
     window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
@@ -435,7 +432,7 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
     setNodes(nds => nds.concat({
       id: newNodeId,
       type: 'process',
-      position: { x: newX, y: y + BRANCH_CHILD_VERTICAL_GAP }, 
+      position: { x: newX, y: y + DEFAULT_CHILD_VERTICAL_GAP },
       data: { text: '追加された枝', sides: [] }
     } as any));
 

@@ -18,7 +18,7 @@ import { ProcessNode } from './components/nodes/ProcessNode';
 import { ProcessEdge } from './components/edges/ProcessEdge';
 import { generateTexCode } from './lib/texGenerator';
 import { supabase } from './lib/supabase';
-import { DEFAULT_MERGE_OFFSET, GRID_SIZE } from './lib/layoutConstants';
+import { DEFAULT_CHILD_VERTICAL_GAP, DEFAULT_MERGE_OFFSET, GRID_SIZE, MIN_MERGE_OFFSET } from './lib/layoutConstants';
 import { LicensePage } from './components/LicensePage';
 import { HelpPage } from './components/HelpPage';
 
@@ -34,8 +34,6 @@ function StoreRefSetter({ storeRef }: { storeRef: React.MutableRefObject<ReturnT
 const nodeTypes = { process: ProcessNode };
 const edgeTypes = { process_edge: ProcessEdge };
 
-// 合流エッジのベンドポイント計算に使う定数（ProcessEdge.tsx の DEFAULT_MERGE_OFFSET と対応）
-const MIN_MERGE_OFFSET = 20;
 type HistorySnapshot = { nodes: any[]; edges: any[] };
 
 const initialNodes = [
@@ -654,13 +652,13 @@ export default function App() {
                 };
                 const sourceHandleYs = selectedNodes.map((n: any) => getSourceHandleY(n));
                 const maxSourceHandleY = Math.max(...sourceHandleYs);
-                // 合流エッジの折れ線ベンドY: 共通の既定オフセットと統一
+                // 合流エッジの折れ線ベンドY: 共通のデフォルトオフセットと統一
                 const alignedBendY = maxSourceHandleY + DEFAULT_MERGE_OFFSET;
                 // 合流ノードの配置Y: 他の追加ロジック（通常・分岐）と揃えて、
-                // 親ノードの上端（position.y）から 140px 下、かつ合流ベンドより下に配置する。
+                // 親ノードの上端から既定の縦間隔だけ下げ、かつ合流ベンドより下に配置する。
                 const parentTops = selectedNodes.map((n: any) => n.position.y);
                 const maxParentTop = Math.max(...parentTops);
-                const y = Math.round((Math.max(maxParentTop + 140, alignedBendY + MIN_MERGE_OFFSET)) / GRID_SIZE) * GRID_SIZE;
+                const y = Math.round((Math.max(maxParentTop + DEFAULT_CHILD_VERTICAL_GAP, alignedBendY + MIN_MERGE_OFFSET)) / GRID_SIZE) * GRID_SIZE;
 
                 const newNode = {
                   id: newNodeId,
