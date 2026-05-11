@@ -147,7 +147,7 @@ export const ProcessEdge = ({
     ? alignedMergeBendY - sourceY
     : mergeOffset;
   const mergeMidY = sourceY + mergeOffsetFromSource * UI_VERTICAL_STRETCH;
-  const shouldUseMergePath = isActualMerge && (!isBranch || mergeMidY > branchMidY);
+  const shouldUseMergePath = isActualMerge && (!isBranch || (alignedMergeBendY !== null && mergeMidY > branchMidY));
 
   // パスの選択とラベル位置の決定
   let edgePath: string;
