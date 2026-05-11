@@ -655,12 +655,13 @@ export default function App() {
                 };
                 const sourceHandleYs = selectedNodes.map((n: any) => getSourceHandleY(n));
                 const maxSourceHandleY = Math.max(...sourceHandleYs);
-                const DEFAULT_MERGE_OFFSET_BTN = 50;
-                const alignedBendY = maxSourceHandleY + DEFAULT_MERGE_OFFSET_BTN;
-
-                // 合流ノードの配置Y: 揃えたベンドYから分岐間隔と同程度の短い距離だけ下に配置
-                const MERGE_BTN_GAP = 40;
-                const y = Math.round((alignedBendY + MERGE_BTN_GAP) / GRID_SIZE) * GRID_SIZE;
+                // 合流エッジの折れ線ベンドY: texGeneratorのDEFAULT_MERGE_OFFSET_PX(40)と統一
+                const alignedBendY = maxSourceHandleY + 40;
+                // 合流ノードの配置Y: 他の追加ロジック（通常・分岐）と揃えて、
+                // 親ノードの上端（position.y）から 140px 下に配置する。
+                const parentTops = selectedNodes.map((n: any) => n.position.y);
+                const maxParentTop = Math.max(...parentTops);
+                const y = Math.round((maxParentTop + 140) / GRID_SIZE) * GRID_SIZE;
 
                 const newNode = {
                   id: newNodeId,

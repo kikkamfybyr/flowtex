@@ -105,8 +105,13 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
       const loopDir: 'right' | 'left' | null =
         edgeData.isLoop === 'left' ? 'left' : edgeData.isLoop ? 'right' : null;
 
-      // ターゲット位置（複数本なら等間隔、1本なら中央）
-      const fraction = ((index + 1) / (sortedEdges.length + 1)).toFixed(2);
+      // ターゲット位置: 合流の場合は中央寄せ（固定ステップ0.10）、1本なら中央
+      // N本合流: fraction = 0.5 + (index - (N-1)/2) * MERGE_STEP
+      // 例) N=2: 0.45, 0.55  N=3: 0.40, 0.50, 0.60
+      const MERGE_STEP = 0.10;
+      const fraction = isMerge
+        ? (0.5 + (index - (sortedEdges.length - 1) / 2) * MERGE_STEP).toFixed(2)
+        : null;
       const targetAnchor = isMerge
         ? `($(${targetId}.north west)!${fraction}!(${targetId}.north east)$)`
         : `(${targetId}.north)`;
@@ -130,7 +135,8 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
               texParts.push(`    \\draw [thick] (${edge.source}.south) -- ${targetAnchor};`);
           } else if (isMerge) {
               // mergeOffset (px) を Y_SCALE で割って cm に変換し、各合流枝のベンドY座標を揃える
-              const DEFAULT_MERGE_OFFSET_PX = 50;
+              // デフォルトは branchOffset と同じ 40px (= 0.40cm) に統一
+              const DEFAULT_MERGE_OFFSET_PX = 40;
               const mergeOffsetPx = (edgeData.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET_PX;
               const quantizedMergeOffsetPx = quantize(mergeOffsetPx, TEX_Y_QUANTIZE_PX);
               const texDrop = (quantizedMergeOffsetPx / Y_SCALE).toFixed(2);
