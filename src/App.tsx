@@ -654,11 +654,11 @@ export default function App() {
                 const maxSourceHandleY = Math.max(...sourceHandleYs);
                 // 合流エッジの折れ線ベンドY: 共通のデフォルトオフセットと統一
                 const alignedBendY = maxSourceHandleY + DEFAULT_MERGE_OFFSET;
-                // 合流ノードの配置Y: 他の追加ロジック（通常・分岐）と揃えて、
-                // 親ノードの上端から既定の縦間隔だけ下げ、かつ合流ベンドより下に配置する。
+                // 合流ノードの配置Y: 他の追加ロジック（通常・分岐）と同様に
+                // 親ノード上端 + 既定の縦間隔を基準にする。
                 const parentTops = selectedNodes.map((n: any) => n.position.y);
                 const maxParentTop = Math.max(...parentTops);
-                const y = Math.round((Math.max(maxParentTop + DEFAULT_CHILD_VERTICAL_GAP, alignedBendY + MIN_MERGE_OFFSET)) / GRID_SIZE) * GRID_SIZE;
+                const y = Math.round((maxParentTop + DEFAULT_CHILD_VERTICAL_GAP) / GRID_SIZE) * GRID_SIZE;
 
                 const newNode = {
                   id: newNodeId,
