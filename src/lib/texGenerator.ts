@@ -1,5 +1,20 @@
 import { ChemNode, ChemEdge } from './types';
-import { DEFAULT_BRANCH_OFFSET, GRID_SIZE } from './layoutConstants';
+import { DEFAULT_BRANCH_OFFSET, DEFAULT_MERGE_OFFSET, GRID_SIZE } from './layoutConstants';
+
+const MERGE_STEP = 0.10;
+const MIN_MERGE_FRACTION = 0.05;
+const MAX_MERGE_FRACTION = 0.95;
+
+const getMergeAnchorFraction = (index: number, total: number): string | null => {
+  if (total <= 1) return null;
+
+  const fixedStepSpan = (total - 1) * MERGE_STEP;
+  const rawFraction = fixedStepSpan <= (MAX_MERGE_FRACTION - MIN_MERGE_FRACTION)
+    ? 0.5 + (index - (total - 1) / 2) * MERGE_STEP
+    : (index + 1) / (total + 1);
+  const clampedFraction = Math.min(MAX_MERGE_FRACTION, Math.max(MIN_MERGE_FRACTION, rawFraction));
+  return clampedFraction.toFixed(2);
+};
 
 export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string => {
   const TEX_X_QUANTIZE_PX = GRID_SIZE;
@@ -108,10 +123,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
       // ターゲット位置: 合流の場合は中央寄せ（固定ステップ0.10）、1本なら中央
       // N本合流: fraction = 0.5 + (index - (N-1)/2) * MERGE_STEP
       // 例) N=2: 0.45, 0.55  N=3: 0.40, 0.50, 0.60
-      const MERGE_STEP = 0.10;
-      const fraction = isMerge
-        ? (0.5 + (index - (sortedEdges.length - 1) / 2) * MERGE_STEP).toFixed(2)
-        : null;
+      const fraction = isMerge ? getMergeAnchorFraction(index, sortedEdges.length) : null;
       const targetAnchor = isMerge
         ? `($(${targetId}.north west)!${fraction}!(${targetId}.north east)$)`
         : `(${targetId}.north)`;
@@ -136,8 +148,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
           } else if (isMerge) {
               // mergeOffset (px) を Y_SCALE で割って cm に変換し、各合流枝のベンドY座標を揃える
               // デフォルトは branchOffset と同じ 40px (= 0.40cm) に統一
-              const DEFAULT_MERGE_OFFSET_PX = 40;
-              const mergeOffsetPx = (edgeData.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET_PX;
+              const mergeOffsetPx = (edgeData.mergeOffset as number) ?? DEFAULT_MERGE_OFFSET;
               const quantizedMergeOffsetPx = quantize(mergeOffsetPx, TEX_Y_QUANTIZE_PX);
               const texDrop = (quantizedMergeOffsetPx / Y_SCALE).toFixed(2);
               texParts.push(`    \\draw [thick] (${edge.source}.south) -- ++(0,-${texDrop}) -| ${targetAnchor};`);

@@ -1,7 +1,7 @@
 import { BaseEdge, EdgeLabelRenderer, EdgeProps, getSmoothStepPath, useReactFlow, useNodes, useEdges } from '@xyflow/react';
 import { Position } from '@xyflow/react';
 import { useCallback } from 'react';
-import { DEFAULT_BRANCH_OFFSET } from '../../lib/layoutConstants';
+import { DEFAULT_BRANCH_OFFSET, DEFAULT_MERGE_OFFSET } from '../../lib/layoutConstants';
 
 type MergeEdge = { source: string; target: string; data?: Record<string, unknown> };
 type MergeNode = { id: string; position: { x: number; y: number }; data?: unknown; [key: string]: unknown };
@@ -26,8 +26,6 @@ const getEdgeDegreeCounts = (edges: MergeEdge[]) => {
   edgeDegreeCache.set(edges, counts);
   return counts;
 };
-
-const DEFAULT_MERGE_OFFSET = 50;
 
 // ターゲットに集まる全エッジ（ブランチ・非ブランチ問わず）の実効ベンドYを計算し、
 // 最大値を返す。これにより、異なる高さから来るエッジの水平セグメントを同じYに揃える。

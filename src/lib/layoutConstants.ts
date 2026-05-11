@@ -1,2 +1,3 @@
 export const DEFAULT_BRANCH_OFFSET = 40;
+export const DEFAULT_MERGE_OFFSET = DEFAULT_BRANCH_OFFSET;
 export const GRID_SIZE = 10;

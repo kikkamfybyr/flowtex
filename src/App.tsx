@@ -18,7 +18,7 @@ import { ProcessNode } from './components/nodes/ProcessNode';
 import { ProcessEdge } from './components/edges/ProcessEdge';
 import { generateTexCode } from './lib/texGenerator';
 import { supabase } from './lib/supabase';
-import { GRID_SIZE } from './lib/layoutConstants';
+import { DEFAULT_MERGE_OFFSET, GRID_SIZE } from './lib/layoutConstants';
 import { LicensePage } from './components/LicensePage';
 import { HelpPage } from './components/HelpPage';
 
@@ -377,7 +377,6 @@ export default function App() {
 
         // 合流（同じターゲットに複数エッジが入る）時: ベンドポイントのY座標を揃える
         // 非ブランチの合流エッジを対象に、最も低い（Y値最大の）ベンドYに統一する
-        const DEFAULT_MERGE_OFFSET = 50;
         const mergeEdges = result.filter(e => e.target === params.target && !(e.data?.isBranch));
         if (mergeEdges.length > 1) {
           const getSourceHandleY = (sourceId: string) => {
@@ -655,13 +654,13 @@ export default function App() {
                 };
                 const sourceHandleYs = selectedNodes.map((n: any) => getSourceHandleY(n));
                 const maxSourceHandleY = Math.max(...sourceHandleYs);
-                // 合流エッジの折れ線ベンドY: texGeneratorのDEFAULT_MERGE_OFFSET_PX(40)と統一
-                const alignedBendY = maxSourceHandleY + 40;
+                // 合流エッジの折れ線ベンドY: 共通の既定オフセットと統一
+                const alignedBendY = maxSourceHandleY + DEFAULT_MERGE_OFFSET;
                 // 合流ノードの配置Y: 他の追加ロジック（通常・分岐）と揃えて、
-                // 親ノードの上端（position.y）から 140px 下に配置する。
+                // 親ノードの上端（position.y）から 140px 下、かつ合流ベンドより下に配置する。
                 const parentTops = selectedNodes.map((n: any) => n.position.y);
                 const maxParentTop = Math.max(...parentTops);
-                const y = Math.round((maxParentTop + 140) / GRID_SIZE) * GRID_SIZE;
+                const y = Math.round((Math.max(maxParentTop + 140, alignedBendY + MIN_MERGE_OFFSET)) / GRID_SIZE) * GRID_SIZE;
 
                 const newNode = {
                   id: newNodeId,
