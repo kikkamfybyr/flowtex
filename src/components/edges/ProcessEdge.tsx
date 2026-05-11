@@ -98,7 +98,6 @@ export const ProcessEdge = ({
 
   // 1. 分岐パス（縦→横→縦）
   // ユーザーがドラッグで調整可能なオフセットを使用
-  const branchMidYRaw = sourceY + branchOffset;
   const branchMidY = sourceY + branchOffset * UI_VERTICAL_STRETCH;
   const familyTreePath = `M ${sourceX},${sourceY} L ${sourceX},${branchMidY} L ${targetX},${branchMidY} L ${targetX},${targetY}`;
 
@@ -148,7 +147,7 @@ export const ProcessEdge = ({
     ? alignedMergeBendY - sourceY
     : mergeOffset;
   const mergeMidY = sourceY + mergeOffsetFromSource * UI_VERTICAL_STRETCH;
-  const shouldUseMergePath = isActualMerge && (!isBranch || (alignedMergeBendY !== null && alignedMergeBendY > branchMidYRaw));
+  const shouldUseMergePath = isActualMerge && (!isBranch || mergeMidY > branchMidY);
 
   // パスの選択とラベル位置の決定
   let edgePath: string;
