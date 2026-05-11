@@ -5,6 +5,7 @@ import { DEFAULT_BRANCH_OFFSET, DEFAULT_MERGE_OFFSET } from '../../lib/layoutCon
 
 type MergeEdge = { source: string; target: string; data?: Record<string, unknown> };
 type MergeNode = { id: string; position: { x: number; y: number }; data?: unknown; [key: string]: unknown };
+// Canvas 上の見た目だけを少し縦に伸ばす係数（TeX 出力座標には影響しない）
 const UI_VERTICAL_STRETCH = 1.08;
 
 const edgeDegreeCache = new WeakMap<object, {
@@ -147,7 +148,7 @@ export const ProcessEdge = ({
     ? alignedMergeBendY - sourceY
     : mergeOffset;
   const mergeMidY = sourceY + mergeOffsetFromSource * UI_VERTICAL_STRETCH;
-  const shouldUseMergePath = isActualMerge && (!isBranch || (alignedMergeBendY !== null && mergeMidY > branchMidY));
+  const shouldUseMergePath = isActualMerge && (!isBranch || (alignedMergeBendY !== null && alignedMergeBendY > sourceY + branchOffset));
 
   // パスの選択とラベル位置の決定
   let edgePath: string;
