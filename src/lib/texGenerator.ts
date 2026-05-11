@@ -5,15 +5,14 @@ const MERGE_STEP = 0.10;
 const MIN_MERGE_FRACTION = 0.05;
 const MAX_MERGE_FRACTION = 0.95;
 
-const getMergeAnchorFraction = (index: number, total: number): string | null => {
+const getMergeAnchorFraction = (index: number, total: number): number | null => {
   if (total <= 1) return null;
 
   const fixedStepSpan = (total - 1) * MERGE_STEP;
   const rawFraction = fixedStepSpan <= (MAX_MERGE_FRACTION - MIN_MERGE_FRACTION)
     ? 0.5 + (index - (total - 1) / 2) * MERGE_STEP
     : (index + 1) / (total + 1);
-  const clampedFraction = Math.min(MAX_MERGE_FRACTION, Math.max(MIN_MERGE_FRACTION, rawFraction));
-  return clampedFraction.toFixed(2);
+  return Math.min(MAX_MERGE_FRACTION, Math.max(MIN_MERGE_FRACTION, rawFraction));
 };
 
 export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string => {
@@ -123,7 +122,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
       // ターゲット位置: 合流の場合は中央寄せ（固定ステップ0.10）、1本なら中央
       // N本合流: fraction = 0.5 + (index - (N-1)/2) * MERGE_STEP
       // 例) N=2: 0.45, 0.55  N=3: 0.40, 0.50, 0.60
-      const fraction = isMerge ? getMergeAnchorFraction(index, sortedEdges.length) : null;
+      const fraction = isMerge ? getMergeAnchorFraction(index, sortedEdges.length)?.toFixed(2) : null;
       const targetAnchor = isMerge
         ? `($(${targetId}.north west)!${fraction}!(${targetId}.north east)$)`
         : `(${targetId}.north)`;
