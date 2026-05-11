@@ -1,5 +1,5 @@
 import { ChemNode, ChemEdge } from './types';
-import { DEFAULT_BRANCH_OFFSET, DEFAULT_MERGE_OFFSET, GRID_SIZE } from './layoutConstants';
+import { DEFAULT_BRANCH_OFFSET, DEFAULT_CHILD_VERTICAL_GAP, DEFAULT_MERGE_OFFSET, GRID_SIZE } from './layoutConstants';
 
 const MERGE_STEP = 0.10;
 const MIN_MERGE_FRACTION = 0.05;
@@ -32,7 +32,9 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
     processes.map((process) => [process.id, quantize(process.position.x, TEX_X_QUANTIZE_PX)])
   );
 
-  const Y_SCALE = 130; 
+  const BASE_UI_CHILD_VERTICAL_GAP = 140;
+  const BASE_TEX_Y_SCALE = 100;
+  const Y_SCALE = (DEFAULT_CHILD_VERTICAL_GAP / BASE_UI_CHILD_VERTICAL_GAP) * BASE_TEX_Y_SCALE;
 
   let texParts: string[] = [];
 
