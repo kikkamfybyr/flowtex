@@ -32,7 +32,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
     processes.map((process) => [process.id, quantize(process.position.x, TEX_X_QUANTIZE_PX)])
   );
 
-  // Backward-compat baseline from before default UI spacing was expanded (px).
+  // Backward-compat baseline from before spacing expansion in commit 3ecb7bf (px).
   const BASE_UI_CHILD_VERTICAL_GAP = 140;
   // Backward-compat baseline from the same pre-expansion TeX output scale.
   const BASE_TEX_Y_SCALE = 100;
