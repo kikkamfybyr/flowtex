@@ -178,7 +178,7 @@ export const ProcessEdge = ({
   }
 
   // 合流（isActualMerge）の場合、×ボタンがターゲットノードに被らないようにmidYを上方にクランプ
-  const EDGE_BUTTON_MARGIN = 36;
+  const EDGE_BUTTON_MARGIN = 16;
   if (isActualMerge) {
     midY = Math.min(midY, targetY - EDGE_BUTTON_MARGIN);
   }
