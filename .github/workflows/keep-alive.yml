@@ -14,8 +14,9 @@ jobs:
         # supabase-js/npm 不要。curl で直接 PostgREST エンドポイントを叩き
         # Supabase ダッシュボードの API リクエストカウントに確実に記録させる。
         run: |
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/?apikey=${{ secrets.SUPABASE_ANON_KEY }}" \
+          HTTP_STATUS=$(curl -sS --connect-timeout 10 --max-time 30 -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
           echo "HTTP status: $HTTP_STATUS"
           if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 500 ]; then
