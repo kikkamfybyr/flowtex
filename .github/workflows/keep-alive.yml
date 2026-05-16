@@ -2,28 +2,25 @@ name: Supabase Keep Alive
 
 on:
   schedule:
-    # 月・木の深夜0時UTC（週2回、約3〜4日間隔で一貫して実行）
-    - cron: '0 0 * * 1,4'
+    # 毎日 UTC 0:00 に実行（7日間アクティビティなし判定を確実に回避）
+    - cron: '0 0 * * *'
   workflow_dispatch: # 手動実行も可能に
 
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run keep-alive script
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: node scripts/keep-alive.js
+      - name: Ping Supabase REST API
+        # supabase-js/npm 不要。curl で直接 PostgREST エンドポイントを叩き
+        # Supabase ダッシュボードの API リクエストカウントに確実に記録させる。
+        run: |
+          HTTP_STATUS=$(curl -sS --connect-timeout 10 --max-time 30 -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+          echo "HTTP status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 500 ]; then
+            echo "エラー: 予期しないステータスコード $HTTP_STATUS"
+            exit 1
+          fi
+          echo "接続成功: Supabase プロジェクトのアクティブ状態を維持しました。"
