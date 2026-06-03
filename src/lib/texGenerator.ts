@@ -32,7 +32,8 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
   // Example for 2 reagents: start:r1:r2:end = 2:3:2
   // Example for 3 reagents: start:r1:r2:r3:end = 2:3:3:2
   // For the i-th reagent (0-based), place it at:
-  // (edge + i*inner) / (2*edge + (reagentCount-1)*inner)
+  // (REAGENT_EDGE_GAP_WEIGHT + i * REAGENT_INNER_GAP_WEIGHT)
+  // / (2 * REAGENT_EDGE_GAP_WEIGHT + (reagentCount - 1) * REAGENT_INNER_GAP_WEIGHT)
   // i.e. cumulative distance from start divided by total segment length.
   const getReagentPosition = (index: number, total: number): number => {
     if (total <= 1) return 0.5;

@@ -235,9 +235,10 @@ export default function App() {
     const correctionX = snapToGrid(anchorNode.position.x) - anchorNode.position.x;
     const correctionY = snapToGrid(anchorNode.position.y) - anchorNode.position.y;
 
-    // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ。
-    // 複数選択時はドラッグ中のノード間の相対位置を保つため、同一補正量を適用してから丸める。
-    // スナップ後の座標をここで確定し、setNodes / setEdges の両方で同じ値を使う。
+    // Force-round fractional coordinates at drag stop to prevent horizontal drift.
+    // For multi-selection, apply one shared correction amount before snapping
+    // so relative positions between dragged nodes stay unchanged.
+    // Final snapped positions are fixed here and reused for both setNodes/setEdges.
     const snappedPositions = new Map<string, { x: number; y: number }>();
     nodesToUpdate.forEach((n) => {
       snappedPositions.set(n.id, {
