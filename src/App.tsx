@@ -224,13 +224,15 @@ export default function App() {
   }, [takeSnapshot]);
 
   const onNodeDragStop = useCallback<OnNodeDrag>((_event, draggedNode, nodesToUpdate) => {
+    if (nodesToUpdate.length === 0) return;
+
     takeSnapshot();
 
     const draggedIds = new Set(nodesToUpdate.map((n) => n.id));
     const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
     const anchorNode = nodesToUpdate.find((n) => n.id === draggedNode.id) ?? nodesToUpdate[0];
-    const correctionX = anchorNode ? snapToGrid(anchorNode.position.x) - anchorNode.position.x : 0;
-    const correctionY = anchorNode ? snapToGrid(anchorNode.position.y) - anchorNode.position.y : 0;
+    const correctionX = snapToGrid(anchorNode.position.x) - anchorNode.position.x;
+    const correctionY = snapToGrid(anchorNode.position.y) - anchorNode.position.y;
 
     // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ。
     // 複数選択時はドラッグ中のノード間の相対位置を保つため、同一補正量を適用してから丸める。
