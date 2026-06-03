@@ -30,7 +30,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
   const quantize = (value: number, step: number) => Math.round(value / step) * step;
   // Reagent labels are distributed with edge-heavy spacing:
   // N=2 -> 2:3:2, N=3 -> 2:3:3:2.
-  // For index i (0-based), position = (edge + i*inner) / (2*edge + (N-1)*inner).
+  // For index i (0-based), cumulative position = (edge + i*inner) / (2*edge + (N-1)*inner).
   const getReagentPosition = (index: number, total: number): number => {
     if (total <= 1) return 0.5;
     const numerator = REAGENT_EDGE_GAP_WEIGHT + REAGENT_INNER_GAP_WEIGHT * index;

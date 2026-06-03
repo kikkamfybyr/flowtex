@@ -230,6 +230,7 @@ export default function App() {
 
     const draggedIds = new Set(nodesToUpdate.map((n) => n.id));
     const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
+    // Fallback to draggedNode for rare cases where React Flow does not include it in nodesToUpdate.
     const anchorNode = nodesToUpdate.find((n) => n.id === draggedNode.id) ?? draggedNode;
     const correctionX = snapToGrid(anchorNode.position.x) - anchorNode.position.x;
     const correctionY = snapToGrid(anchorNode.position.y) - anchorNode.position.y;
