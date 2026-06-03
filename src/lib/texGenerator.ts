@@ -25,10 +25,18 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
   const TEX_X_QUANTIZE_PX = GRID_SIZE;
   const TEX_X_SCALE = 80;
   const TEX_Y_QUANTIZE_PX = 20;
+  const REAGENT_EDGE_GAP_WEIGHT = 2;
+  const REAGENT_INNER_GAP_WEIGHT = 3;
   const quantize = (value: number, step: number) => Math.round(value / step) * step;
+  // Reagent labels are distributed with edge-heavy spacing:
+  // N=2 -> 2:3:2, N=3 -> 2:3:3:2.
+  // For index i (0-based), position = (edge + i*inner) / (2*edge + (N-1)*inner).
   const getReagentPosition = (index: number, total: number): number => {
     if (total <= 1) return 0.5;
-    return (2 + 3 * index) / (3 * total + 1);
+    const numerator = REAGENT_EDGE_GAP_WEIGHT + REAGENT_INNER_GAP_WEIGHT * index;
+    const denominator =
+      REAGENT_EDGE_GAP_WEIGHT * 2 + REAGENT_INNER_GAP_WEIGHT * (total - 1);
+    return numerator / denominator;
   };
   const processes = nodes.filter(n => n.type === 'process');
   const processById = new Map(processes.map((process) => [process.id, process]));

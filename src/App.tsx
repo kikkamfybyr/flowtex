@@ -230,7 +230,7 @@ export default function App() {
 
     const draggedIds = new Set(nodesToUpdate.map((n) => n.id));
     const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
-    const anchorNode = nodesToUpdate.find((n) => n.id === draggedNode.id) ?? nodesToUpdate[0];
+    const anchorNode = nodesToUpdate.find((n) => n.id === draggedNode.id) ?? draggedNode;
     const correctionX = snapToGrid(anchorNode.position.x) - anchorNode.position.x;
     const correctionY = snapToGrid(anchorNode.position.y) - anchorNode.position.y;
 
