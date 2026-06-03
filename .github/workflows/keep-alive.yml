@@ -12,10 +12,10 @@ jobs:
     steps:
       - name: Ping Supabase database via PostgREST
         # ルート(/rest/v1/)ではなく、実テーブルをselectしてDBアクセスを確実に発生させる。
-        # Service Role Key があれば優先利用し、なければ Anon Key を使う。
+        # Keep-alive用途では過剰権限を避けるため Anon Key を使う。
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_API_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           KEEP_ALIVE_TABLE: ${{ vars.SUPABASE_KEEP_ALIVE_TABLE || 'flows' }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_API_KEY" ]; then
