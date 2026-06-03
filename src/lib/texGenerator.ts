@@ -26,6 +26,10 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
   const TEX_X_SCALE = 80;
   const TEX_Y_QUANTIZE_PX = 20;
   const quantize = (value: number, step: number) => Math.round(value / step) * step;
+  const getReagentPosition = (index: number, total: number): number => {
+    if (total <= 1) return 0.5;
+    return (2 + 3 * index) / (3 * total + 1);
+  };
   const processes = nodes.filter(n => n.type === 'process');
   const processById = new Map(processes.map((process) => [process.id, process]));
   const snappedXById = new Map(
@@ -53,23 +57,23 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
 \\newcommand{\\addreagent}[4]{
     \\path (#1) -- (#2) node[coordinate, pos=#3] (tmp) {};
     \\draw [thick, -{Latex[length=2.5mm, width=2.0mm]}] ($ (tmp) + (0.75, 0) $) -- (tmp);
-    \\node [reagent_node, anchor=west] at ($ (tmp) + (0.785, 0) $) {#4};
+    \\node [reagent_node, anchor=west, align=left] at ($ (tmp) + (0.785, 0) $) {#4};
 }
 
 \\newcommand{\\addside}[2]{
     \\draw [thick, -{Latex[length=2.5mm, width=2.0mm]}] ($ (#1.east) + (0.75, 0) $) |- (#1.east);
-    \\node [anchor=west, font=\\small] at ($ (#1.east) + (0.785, 0) $) {#2};
+    \\node [anchor=west, font=\\small, align=left] at ($ (#1.east) + (0.785, 0) $) {#2};
 }
 
 % --- スタイル定義 ---
 \\tikzset{
     proc/.style={
         draw, thick, sharp corners, fill=white,
-        inner sep=2mm, align=center, font=\\small,
+        inner sep=2mm, align=left, font=\\small,
         minimum width=2cm
     },
     reagent_node/.style={
-        font=\\small, inner sep=2pt, anchor=south
+        font=\\small, inner sep=2pt, anchor=south, align=left
     },
     myarrow/.style={thick, {Latex[length=2.5mm, width=2.0mm]}-}
 }
@@ -242,7 +246,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
       const splitCoord = `split_${node.id}`;
       trunkReagents.forEach((reagent, index) => {
         const textStr = reagent.text.replace(/\n/g, '\\\\');
-        const autoPos = (index + 1) / (trunkReagents.length + 1);
+        const autoPos = getReagentPosition(index, trunkReagents.length);
         const posStr = autoPos.toFixed(2);
         texParts.push(`    \\addreagent{${node.id}.south}{${splitCoord}}{${posStr}}{${textStr}}`);
       });
@@ -255,7 +259,7 @@ export const generateTexCode = (nodes: ChemNode[], edges: ChemEdge[]): string =>
     if (edgeReagents.length > 0) {
       edgeReagents.forEach((reagent, index) => {
         const textStr = reagent.text.replace(/\n/g, '\\\\');
-        const autoPos = (index + 1) / (edgeReagents.length + 1);
+        const autoPos = getReagentPosition(index, edgeReagents.length);
         const posStr = autoPos.toFixed(2);
         texParts.push(`    \\addreagent{${edge.source}.south}{${edge.target}.north}{${posStr}}{${textStr}}`);
       });
