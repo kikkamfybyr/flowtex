@@ -223,18 +223,23 @@ export default function App() {
     return () => window.removeEventListener('flowtex:take-snapshot', takeSnapshot);
   }, [takeSnapshot]);
 
-  const onNodeDragStop = useCallback<OnNodeDrag>((_event, _node, nodesToUpdate) => {
+  const onNodeDragStop = useCallback<OnNodeDrag>((_event, draggedNode, nodesToUpdate) => {
     takeSnapshot();
 
     const draggedIds = new Set(nodesToUpdate.map((n) => n.id));
+    const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
+    const anchorNode = nodesToUpdate.find((n) => n.id === draggedNode.id) ?? nodesToUpdate[0];
+    const correctionX = anchorNode ? snapToGrid(anchorNode.position.x) - anchorNode.position.x : 0;
+    const correctionY = anchorNode ? snapToGrid(anchorNode.position.y) - anchorNode.position.y : 0;
 
     // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ。
+    // 複数選択時はドラッグ中のノード間の相対位置を保つため、同一補正量を適用してから丸める。
     // スナップ後の座標をここで確定し、setNodes / setEdges の両方で同じ値を使う。
     const snappedPositions = new Map<string, { x: number; y: number }>();
     nodesToUpdate.forEach((n) => {
       snappedPositions.set(n.id, {
-        x: Math.round(n.position.x / GRID_SIZE) * GRID_SIZE,
-        y: Math.round(n.position.y / GRID_SIZE) * GRID_SIZE,
+        x: snapToGrid(n.position.x + correctionX),
+        y: snapToGrid(n.position.y + correctionY),
       });
     });
 
