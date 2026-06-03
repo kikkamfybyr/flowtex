@@ -462,7 +462,18 @@ export const ProcessNode = ({ id, data, selected, positionAbsoluteY }: NodeProps
       <button className="delete-btn" onClick={handleDelete} title="プロセス削除">×</button>
       <Handle id="top" type="target" position={Position.Top} onTouchEnd={(e) => handleHandleTouchEnd(e, 'target', 'top')} />
       
-      <div onClick={() => { if (!isEditing) { window.dispatchEvent(new CustomEvent('flowtex:take-snapshot')); setIsEditing(true); } }}>
+      <div
+        onClick={(e) => {
+          if (e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) {
+            e.preventDefault();
+            return;
+          }
+          if (!isEditing) {
+            window.dispatchEvent(new CustomEvent('flowtex:take-snapshot'));
+            setIsEditing(true);
+          }
+        }}
+      >
         {isEditing ? (
           <div style={{ display: 'inline-grid', alignItems: 'center', justifyItems: 'center', width: '100%' }}>
             {/* テキスト長に合わせた幅を確保するための非表示スパン */}
