@@ -10,16 +10,29 @@ jobs:
   keep-alive:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase REST API
-        # supabase-js/npm 不要。curl で直接 PostgREST エンドポイントを叩き
-        # Supabase ダッシュボードの API リクエストカウントに確実に記録させる。
+      - name: Ping Supabase database via PostgREST
+        # ルート(/rest/v1/)ではなく、実テーブルをselectしてDBアクセスを確実に発生させる。
+        # Service Role Key があれば優先利用し、なければ Anon Key を使う。
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_ANON_KEY }}
+          KEEP_ALIVE_TABLE: ${{ vars.SUPABASE_KEEP_ALIVE_TABLE || 'flows' }}
         run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_API_KEY" ]; then
+            echo "エラー: SUPABASE_URL または API キーが未設定です。"
+            exit 1
+          fi
+
+          AUTH_SCHEME="Bearer"
+          AUTH_HEADER="Authorization: ${AUTH_SCHEME} ${SUPABASE_API_KEY}"
           HTTP_STATUS=$(curl -sS --connect-timeout 10 --max-time 30 -o /dev/null -w "%{http_code}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+            "$SUPABASE_URL/rest/v1/$KEEP_ALIVE_TABLE?select=id&limit=1" \
+            -H "apikey: $SUPABASE_API_KEY" \
+            -H "$AUTH_HEADER" \
+            -H "Accept: application/json" \
+            -H "Cache-Control: no-cache")
           echo "HTTP status: $HTTP_STATUS"
-          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 500 ]; then
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
             echo "エラー: 予期しないステータスコード $HTTP_STATUS"
             exit 1
           fi
