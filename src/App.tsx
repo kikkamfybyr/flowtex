@@ -223,18 +223,27 @@ export default function App() {
     return () => window.removeEventListener('flowtex:take-snapshot', takeSnapshot);
   }, [takeSnapshot]);
 
-  const onNodeDragStop = useCallback<OnNodeDrag>((_event, _node, nodesToUpdate) => {
+  const onNodeDragStop = useCallback<OnNodeDrag>((_event, draggedNode, nodesToUpdate) => {
+    if (nodesToUpdate.length === 0) return;
+
     takeSnapshot();
 
     const draggedIds = new Set(nodesToUpdate.map((n) => n.id));
+    const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
+    // Fallback to draggedNode for rare cases where React Flow does not include it in nodesToUpdate.
+    const anchorNode = nodesToUpdate.find((n) => n.id === draggedNode.id) ?? draggedNode;
+    const correctionX = snapToGrid(anchorNode.position.x) - anchorNode.position.x;
+    const correctionY = snapToGrid(anchorNode.position.y) - anchorNode.position.y;
 
-    // ドラッグ終了時に端数（小数点）を強制的に丸めて、ノードの横ズレを防ぐ。
-    // スナップ後の座標をここで確定し、setNodes / setEdges の両方で同じ値を使う。
+    // Force-round fractional coordinates at drag stop to prevent horizontal drift.
+    // For multi-selection, apply one shared correction amount before snapping
+    // so relative positions between dragged nodes stay unchanged.
+    // Final snapped positions are fixed here and reused for both setNodes/setEdges.
     const snappedPositions = new Map<string, { x: number; y: number }>();
     nodesToUpdate.forEach((n) => {
       snappedPositions.set(n.id, {
-        x: Math.round(n.position.x / GRID_SIZE) * GRID_SIZE,
-        y: Math.round(n.position.y / GRID_SIZE) * GRID_SIZE,
+        x: snapToGrid(n.position.x + correctionX),
+        y: snapToGrid(n.position.y + correctionY),
       });
     });
 
